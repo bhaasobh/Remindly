@@ -2,6 +2,8 @@ import React, { useRef, useState, useEffect } from 'react';
 import { View,Text,StyleSheet,Animated,TouchableOpacity,Dimensions,ScrollView,} from 'react-native';
 import MapView, { Region } from 'react-native-maps';
 import * as Location from 'expo-location';
+import { ReminderCard } from '@/components/ReminderCard';
+import Entypo from '@expo/vector-icons/Entypo';
 // import Header from './Header';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -70,7 +72,8 @@ const Home: React.FC = () => {
   const renderBoxes = () => {
     return Array.from({ length: boxesNumber }, (_, index) => (
       <View key={index} style={styles.box}>
-        <Text style={styles.boxText}>Box {index + 1}</Text>
+        {/* <Text style={styles.boxText}>Box {index + 1}</Text> */}
+        <ReminderCard CardName={'Reminder '+ (index+1)}></ReminderCard>
       </View>
     ));
   };
@@ -99,7 +102,13 @@ const Home: React.FC = () => {
         <TouchableOpacity onPress={toggleHeight}>
           <View style={styles.handle} />
         </TouchableOpacity>
-        <Text style={styles.reminderText}>All Remainders</Text>
+        <View>
+         <Text style={styles.reminderText}>All Remainders </Text> 
+        <Entypo style={styles.addTasIcons} name="add-to-list" size={24} color="black" />
+        </View>
+        
+        
+        
         <ScrollView contentContainerStyle={styles.boxesContainer}>
           {renderBoxes()}
         </ScrollView>
@@ -161,6 +170,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 10,
   },
+  addTasIcons:{
+    
+    right:-150
+    
+  },
   boxText: {
     color: '#000',
     fontWeight: 'bold',
@@ -168,8 +182,8 @@ const styles = StyleSheet.create({
   reminderText: {
     fontSize: 22,
     alignItems: 'flex-end',
-    left: -99,
-    position: 'relative',
+    right: 50,
+    position: 'absolute',
     color: '#DF6316',
   },
   MapContainer: {
