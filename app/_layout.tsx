@@ -6,16 +6,19 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import 'react-native-reanimated';
+import { LoginProvider } from "./LoginContext";
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
+
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const router = useRouter();
-  const [isLoginComplete, setIsLoginComplete] = useState(false);
+const [isLoginComplete, setIsLoginComplete] = useState(false);
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -33,20 +36,22 @@ export default function RootLayout() {
 
   if (!isLoginComplete) {
     return (
+      
+
+      <LoginProvider>
        <View style={styles.container1}>
             <View style={styles.topBackground} />
             <Image source={require('../assets/images/Logo.png')} style={styles.Logo} />
             <TextInput style={styles.input} placeholder="UserName" />
             <TextInput style={styles.input} placeholder="Password" secureTextEntry />
-            
             <TouchableOpacity style={styles.button} onPress={() => setIsLoginComplete(true)}>
               <Text style={styles.buttonText}>Log In</Text>
             </TouchableOpacity>
-      
             <TouchableOpacity onPress={() => setIsLoginComplete(true)}>
               <Text style={styles.SignIn}>Sign In</Text>
             </TouchableOpacity>
           </View>
+          </LoginProvider>
 
 
     );
@@ -58,12 +63,11 @@ export default function RootLayout() {
         <Stack.Screen name="about" options={{ title: 'About' }} />
         <Stack.Screen name="+not-found" />
       </Stack>
-      <View style={styles.logoutContainer}>
-        <Button title="Logout" onPress={() => setIsLoginComplete(false)} />
-      </View>
+      
       <StatusBar style="auto" />
     </ThemeProvider>
   );
+  
 }
 
 const styles = StyleSheet.create({
