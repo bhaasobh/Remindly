@@ -1,16 +1,16 @@
 import { Text, View, StyleSheet, Button } from 'react-native';
-import  RootLayout  from '../../app/_layout';
+import { useLogin} from "../auth/LoginContext";
 
 
 
 
-
-export default function AboutScreen({isLoginComplete, setIsLoginComplete}) {
+export default function AboutScreen() {
+  const { isLoginComplete, setIsLoginComplete } = useLogin();
   return (
     <View style={styles.container}>
       <Text style={styles.text}>About screen</Text>
       <View style={styles.logoutContainer}>
-              <Button title="Logout"  />
+              <Button  onPress={() => setIsLoginComplete(false)} title="Logout"  />
             </View>
     </View>
   );
