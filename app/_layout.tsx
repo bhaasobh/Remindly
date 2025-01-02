@@ -19,9 +19,10 @@ export default function RootLayout() {
   
   // Move useLogin hook after LoginProvider
   return (
-    <LoginProvider> {/* Wrap the entire component with LoginProvider */}
+    <LoginProvider>
       <LayoutContent colorScheme={ColorScheme} />
-    </LoginProvider>
+      </LoginProvider>
+    
   );
 }
 
@@ -44,6 +45,7 @@ const LayoutContent = ({ colorScheme }: { colorScheme: any }) => {
 
   if (!isLoginComplete) {
     return (
+       
       <View style={styles.container1}> 
         <View style={styles.topBackground} />
         <Image source={require('../assets/images/Logo.png')} style={styles.Logo} />
@@ -56,10 +58,13 @@ const LayoutContent = ({ colorScheme }: { colorScheme: any }) => {
           <Text style={styles.SignIn}>Sign In</Text>
         </TouchableOpacity>
       </View>
+      
+      
     );
   }
 
-  return (
+  return ( 
+   
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -68,6 +73,7 @@ const LayoutContent = ({ colorScheme }: { colorScheme: any }) => {
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
+    
   );
 };
 
