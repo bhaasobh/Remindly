@@ -6,16 +6,27 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import 'react-native-reanimated';
+import { LoginProvider, useLogin } from "./auth/LoginContext"; // Import LoginContext
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { useColorScheme } from '../hooks/useColorScheme';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const ColorScheme = useColorScheme();
   const router = useRouter();
-  const [isLoginComplete, setIsLoginComplete] = useState(false);
+  
+  // Move useLogin hook after LoginProvider
+  return (
+    <LoginProvider> {/* Wrap the entire component with LoginProvider */}
+      <LayoutContent colorScheme={ColorScheme} />
+    </LoginProvider>
+  );
+}
+
+const LayoutContent = ({ colorScheme }: { colorScheme: any }) => {
+  const { isLoginComplete, setIsLoginComplete } = useLogin(); // Now useLogin works inside the LoginProvider
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -33,24 +44,21 @@ export default function RootLayout() {
 
   if (!isLoginComplete) {
     return (
-       <View style={styles.container1}>
-            <View style={styles.topBackground} />
-            <Image source={require('../assets/images/Logo.png')} style={styles.Logo} />
-            <TextInput style={styles.input} placeholder="UserName" />
-            <TextInput style={styles.input} placeholder="Password" secureTextEntry />
-            
-            <TouchableOpacity style={styles.button} onPress={() => setIsLoginComplete(true)}>
-              <Text style={styles.buttonText}>Log In</Text>
-            </TouchableOpacity>
-      
-            <TouchableOpacity onPress={() => setIsLoginComplete(true)}>
-              <Text style={styles.SignIn}>Sign In</Text>
-            </TouchableOpacity>
-          </View>
-
-
+      <View style={styles.container1}> 
+        <View style={styles.topBackground} />
+        <Image source={require('../assets/images/Logo.png')} style={styles.Logo} />
+        <TextInput style={styles.input} placeholder="UserName" />
+        <TextInput style={styles.input} placeholder="Password" secureTextEntry />
+        <TouchableOpacity style={styles.button} onPress={() => setIsLoginComplete(true)}>
+          <Text style={styles.buttonText}>Log In</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setIsLoginComplete(true)}>
+          <Text style={styles.SignIn}>Sign In</Text>
+        </TouchableOpacity>
+      </View>
     );
   }
+
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
@@ -58,13 +66,10 @@ export default function RootLayout() {
         <Stack.Screen name="about" options={{ title: 'About' }} />
         <Stack.Screen name="+not-found" />
       </Stack>
-      <View style={styles.logoutContainer}>
-        <Button title="Logout" onPress={() => setIsLoginComplete(false)} />
-      </View>
       <StatusBar style="auto" />
     </ThemeProvider>
   );
-}
+};
 
 const styles = StyleSheet.create({
   loginContainer: {
@@ -128,9 +133,10 @@ const styles = StyleSheet.create({
   Logo: {
     width: 333,
     height: 247,
-  },container: {
-flex: 1,
-justifyContent: 'center',
-padding: 16,
-},
+  },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 16,
+  },
 });

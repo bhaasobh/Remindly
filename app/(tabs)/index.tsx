@@ -1,74 +1,189 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import { View,Text,StyleSheet,Animated,TouchableOpacity,Dimensions,ScrollView,} from 'react-native';
+import MapView, { Region } from 'react-native-maps';
+import * as Location from 'expo-location';
+// import Header from './Header';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const BOX_HEIGHT = 300;
+const MAX_HEIGHT = SCREEN_HEIGHT * 0.8;
+const MIN_HEIGHT = 300;
+const boxesNumber = 4; 
 
-export default function HomeScreen() {
+const Home: React.FC = () => {
+  const [boxHeight, setBoxHeight] = useState(BOX_HEIGHT);
+  const [icon, setIcon] = useState('^');
+  const [locationPermission, setLocationPermission] = useState<string>('Not Determined');
+  const [location, setLocation] = useState<Region | null>(null);
+  const heightAnim = useRef(new Animated.Value(BOX_HEIGHT)).current;
+
+  useEffect(() => {
+    const getLocation = async () => {
+      // Check for location permission and request it if needed
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      setLocationPermission(status);
+
+      if (status === 'granted') {
+        // Fetch user's current location
+        const userLocation = await Location.getCurrentPositionAsync({});
+        const { latitude, longitude } = userLocation.coords;
+
+        // Set the region for the map to the user's location
+        const newRegion: Region = {
+          latitude,
+          longitude,
+          latitudeDelta: 0.0922,
+          longitudeDelta: 0.0421,
+        };
+        setLocation(newRegion);
+      }
+    };
+    if (!location) {
+      getLocation();
+    }
+  }, [location]);
+
+  const toggleHeight = () => {
+    if (icon === '^') {
+      const newHeight = boxHeight < MAX_HEIGHT ? boxHeight + 500 : MAX_HEIGHT;
+      setBoxHeight(newHeight);
+      setIcon('v');
+
+      Animated.timing(heightAnim, {
+        toValue: newHeight,
+        duration: 300,
+        useNativeDriver: false,
+      }).start();
+    } else {
+      const newHeight = boxHeight > MIN_HEIGHT ? boxHeight - 500 : MIN_HEIGHT;
+      setBoxHeight(newHeight);
+      setIcon('^');
+
+      Animated.timing(heightAnim, {
+        toValue: newHeight,
+        duration: 300,
+        useNativeDriver: false,
+      }).start();
+    }
+  };
+
+  const renderBoxes = () => {
+    return Array.from({ length: boxesNumber }, (_, index) => (
+      <View key={index} style={styles.box}>
+        <Text style={styles.boxText}>Box {index + 1}</Text>
+      </View>
+    ));
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={styles.container}>
+        {/* <Header /> */}
+      <View style={styles.MapContainer}>
+        {location ? (
+          <MapView
+            style={styles.map}
+            initialRegion={location} 
+          />
+        ) : (
+          <Text>Loading map...</Text> 
+        )}
+      </View>
+      <Animated.View
+        style={[
+          styles.slideUpBox,
+          {
+            height: heightAnim,
+          },
+        ]}
+      >
+        <TouchableOpacity onPress={toggleHeight}>
+          <View style={styles.handle} />
+        </TouchableOpacity>
+        <Text style={styles.reminderText}>All Remainders</Text>
+        <ScrollView contentContainerStyle={styles.boxesContainer}>
+          {renderBoxes()}
+        </ScrollView>
+      </Animated.View>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    backgroundColor: '#F5F5F5',
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  slideUpBox: {
     position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderWidth: 1,
+    borderColor: '#D3D3D3',
+    padding: 20,
+    elevation: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  handle: {
+    width: 50,
+    height: 5,
+    backgroundColor: '#DF6316',
+    borderRadius: 2.5,
+    alignSelf: 'center',
+    left: 0,
+    marginVertical: 10,
+  },
+  boxesContainer: {
+    marginTop: 10,
+    width: 360,
+    alignItems: 'center',
+  },
+  box: {
+    width: 380,
+    height: 50,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#D3D3D3',
+    margin: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  boxText: {
+    color: '#000',
+    fontWeight: 'bold',
+  },
+  reminderText: {
+    fontSize: 22,
+    alignItems: 'flex-end',
+    left: -99,
+    position: 'relative',
+    color: '#DF6316',
+  },
+  MapContainer: {
+    flex: 1,
+    width: '100%',
+    height: '60%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  map: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
   },
 });
+
+export default Home;
