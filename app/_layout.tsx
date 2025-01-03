@@ -19,7 +19,7 @@ export default function RootLayout() {
   
   // Move useLogin hook after LoginProvider
   return (
-    <LoginProvider> {/* Wrap the entire component with LoginProvider */}
+    <LoginProvider> 
       <LayoutContent colorScheme={ColorScheme} />
     </LoginProvider>
   );
