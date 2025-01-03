@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
+
 import { View,Text,StyleSheet,Animated,TouchableOpacity,Dimensions,ScrollView,} from 'react-native';
-import MapView, { Region } from 'react-native-maps';
+import MapView, { Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { ReminderCard } from '@/components/ReminderCard';
 import Entypo from '@expo/vector-icons/Entypo';
@@ -15,6 +16,7 @@ const boxesNumber = 4;
 const Home: React.FC = () => {
   const [boxHeight, setBoxHeight] = useState(BOX_HEIGHT);
   const [icon, setIcon] = useState('^');
+  const [ToggleUp , setToggleUp] = useState(true);
   const [locationPermission, setLocationPermission] = useState<string>('Not Determined');
   const [location, setLocation] = useState<Region | null>(null);
   const heightAnim = useRef(new Animated.Value(BOX_HEIGHT)).current;
@@ -32,12 +34,13 @@ const Home: React.FC = () => {
 
         // Set the region for the map to the user's location
         const newRegion: Region = {
-          latitude,
-          longitude,
+          latitude:3480366682959155,
+          longitude:32.09046222171579,
           latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
+          longitudeDelta: 0.0421
         };
         setLocation(newRegion);
+        <Marker coordinate={newRegion} title='Marker'></Marker>
       }
     };
     if (!location) {
@@ -45,7 +48,9 @@ const Home: React.FC = () => {
     }
   }, [location]);
 
+
   const toggleHeight = () => {
+    setToggleUp(!ToggleUp);
     if (icon === '^') {
       const newHeight = boxHeight < MAX_HEIGHT ? boxHeight + 500 : MAX_HEIGHT;
       setBoxHeight(newHeight);
@@ -100,10 +105,12 @@ const Home: React.FC = () => {
         ]}
       >
         <TouchableOpacity onPress={toggleHeight}>
-          <View style={styles.handle} />
+          
+          {ToggleUp?<Entypo name="arrow-with-circle-up" size={24} color="black" />:<Entypo name="arrow-with-circle-down" size={24} color="black" />}
         </TouchableOpacity>
         <View>
          <Text style={styles.reminderText}>All Remainders </Text> 
+         
         <Entypo style={styles.addTasIcons} name="add-to-list" size={24} color="black" />
         </View>
         

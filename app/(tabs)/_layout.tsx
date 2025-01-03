@@ -1,7 +1,8 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
-import { LoginProvider, useLogin} from "../auth/LoginContext";
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
@@ -35,8 +36,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Personal Items',
+          tabBarIcon: ({ color }) => <MaterialIcons name="backpack" size={24} color="black" />,
         }}
       /> 
        <Tabs.Screen
@@ -49,9 +50,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="about"
         options={{
-          title: 'Me',
+          title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'information-circle' : 'information-circle-outline'} color={color} size={24}/>
+            // <Ionicons name={focused ? 'information-circle' : 'information-circle-outline'} color={color} size={24}/>
+            <MaterialCommunityIcons name="face-man-profile" size={24} color="black" />
           ),
         }}
       />
