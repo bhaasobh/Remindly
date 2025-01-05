@@ -1,10 +1,10 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 
 import { View,Text,StyleSheet,Animated,TouchableOpacity,Dimensions,ScrollView,} from 'react-native';
-import MapView, { Marker, Region } from 'react-native-maps';
-import * as Location from 'expo-location';
+
 import { ReminderCard } from '@/components/ReminderCard';
 import Entypo from '@expo/vector-icons/Entypo';
+import MapComponent from '@/components/MapComponent';
 // import Header from './Header';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -16,38 +16,10 @@ const boxesNumber = 4;
 const Home: React.FC = () => {
   const [boxHeight, setBoxHeight] = useState(BOX_HEIGHT);
   const [icon, setIcon] = useState('^');
+
   const [ToggleUp , setToggleUp] = useState(true);
-  const [locationPermission, setLocationPermission] = useState<string>('Not Determined');
-  const [location, setLocation] = useState<Region | null>(null);
+
   const heightAnim = useRef(new Animated.Value(BOX_HEIGHT)).current;
-
-  useEffect(() => {
-    const getLocation = async () => {
-      // Check for location permission and request it if needed
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      setLocationPermission(status);
-
-      if (status === 'granted') {
-        // Fetch user's current location
-        const userLocation = await Location.getCurrentPositionAsync({});
-        const { latitude, longitude } = userLocation.coords;
-
-        // Set the region for the map to the user's location
-        const newRegion: Region = {
-          latitude:3480366682959155,
-          longitude:32.09046222171579,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421
-        };
-        setLocation(newRegion);
-        <Marker coordinate={newRegion} title='Marker'></Marker>
-      }
-    };
-    if (!location) {
-      getLocation();
-    }
-  }, [location]);
-
 
   const toggleHeight = () => {
     setToggleUp(!ToggleUp);
@@ -86,16 +58,7 @@ const Home: React.FC = () => {
   return (
     <View style={styles.container}>
         {/* <Header /> */}
-      <View style={styles.MapContainer}>
-        {location ? (
-          <MapView
-            style={styles.map}
-            initialRegion={location} 
-          />
-        ) : (
-          <Text>Loading map...</Text> 
-        )}
-      </View>
+     <MapComponent/>
       <Animated.View
         style={[
           styles.slideUpBox,
@@ -192,19 +155,7 @@ const styles = StyleSheet.create({
     right: 50,
     position: 'absolute',
     color: '#DF6316',
-  },
-  MapContainer: {
-    flex: 1,
-    width: '100%',
-    height: '60%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  map: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 10,
-  },
+  }
 });
 
 export default Home;
