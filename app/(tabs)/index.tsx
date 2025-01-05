@@ -1,7 +1,10 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
+
 import { View,Text,StyleSheet,Animated,TouchableOpacity,Dimensions,ScrollView,} from 'react-native';
-import MapView, { Region } from 'react-native-maps';
-import * as Location from 'expo-location';
+
+import { ReminderCard } from '@/components/ReminderCard';
+import Entypo from '@expo/vector-icons/Entypo';
+import MapComponent from '@/components/MapComponent';
 // import Header from './Header';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -13,37 +16,13 @@ const boxesNumber = 4;
 const Home: React.FC = () => {
   const [boxHeight, setBoxHeight] = useState(BOX_HEIGHT);
   const [icon, setIcon] = useState('^');
-  const [locationPermission, setLocationPermission] = useState<string>('Not Determined');
-  const [location, setLocation] = useState<Region | null>(null);
+
+  const [ToggleUp , setToggleUp] = useState(true);
+
   const heightAnim = useRef(new Animated.Value(BOX_HEIGHT)).current;
 
-  useEffect(() => {
-    const getLocation = async () => {
-      // Check for location permission and request it if needed
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      setLocationPermission(status);
-
-      if (status === 'granted') {
-        // Fetch user's current location
-        const userLocation = await Location.getCurrentPositionAsync({});
-        const { latitude, longitude } = userLocation.coords;
-
-        // Set the region for the map to the user's location
-        const newRegion: Region = {
-          latitude,
-          longitude,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        };
-        setLocation(newRegion);
-      }
-    };
-    if (!location) {
-      getLocation();
-    }
-  }, [location]);
-
   const toggleHeight = () => {
+    setToggleUp(!ToggleUp);
     if (icon === '^') {
       const newHeight = boxHeight < MAX_HEIGHT ? boxHeight + 500 : MAX_HEIGHT;
       setBoxHeight(newHeight);
@@ -70,7 +49,8 @@ const Home: React.FC = () => {
   const renderBoxes = () => {
     return Array.from({ length: boxesNumber }, (_, index) => (
       <View key={index} style={styles.box}>
-        <Text style={styles.boxText}>Box {index + 1}</Text>
+        {/* <Text style={styles.boxText}>Box {index + 1}</Text> */}
+        <ReminderCard CardName={'Reminder '+ (index+1)}></ReminderCard>
       </View>
     ));
   };
@@ -78,16 +58,7 @@ const Home: React.FC = () => {
   return (
     <View style={styles.container}>
         {/* <Header /> */}
-      <View style={styles.MapContainer}>
-        {location ? (
-          <MapView
-            style={styles.map}
-            initialRegion={location} 
-          />
-        ) : (
-          <Text>Loading map...</Text> 
-        )}
-      </View>
+     <MapComponent/>
       <Animated.View
         style={[
           styles.slideUpBox,
@@ -97,9 +68,17 @@ const Home: React.FC = () => {
         ]}
       >
         <TouchableOpacity onPress={toggleHeight}>
-          <View style={styles.handle} />
+          
+          {ToggleUp?<Entypo name="arrow-with-circle-up" size={24} color="black" />:<Entypo name="arrow-with-circle-down" size={24} color="black" />}
         </TouchableOpacity>
-        <Text style={styles.reminderText}>All Remainders</Text>
+        <View>
+         <Text style={styles.reminderText}>All Remainders </Text> 
+         
+        <Entypo style={styles.addTasIcons} name="add-to-list" size={24} color="black" />
+        </View>
+        
+        
+        
         <ScrollView contentContainerStyle={styles.boxesContainer}>
           {renderBoxes()}
         </ScrollView>
@@ -161,6 +140,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 10,
   },
+  addTasIcons:{
+    
+    right:-150
+    
+  },
   boxText: {
     color: '#000',
     fontWeight: 'bold',
@@ -168,22 +152,10 @@ const styles = StyleSheet.create({
   reminderText: {
     fontSize: 22,
     alignItems: 'flex-end',
-    left: -99,
-    position: 'relative',
+    right: 50,
+    position: 'absolute',
     color: '#DF6316',
-  },
-  MapContainer: {
-    flex: 1,
-    width: '100%',
-    height: '60%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  map: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 10,
-  },
+  }
 });
 
 export default Home;

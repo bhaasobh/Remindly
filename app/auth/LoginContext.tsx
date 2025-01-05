@@ -33,3 +33,5 @@ export const LoginProvider: React.FC<LoginProviderProps> = ({ children }) => {
     </LoginContext.Provider>
   );
 };
+
+export default LoginContext
