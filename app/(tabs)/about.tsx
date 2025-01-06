@@ -9,9 +9,6 @@ export default function AboutScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>About screen</Text>
-      <View style={styles.logoutContainer}>
-              <Button  onPress={() => setIsLoginComplete(false)} title="Logout"  />
-            </View>
     </View>
   );
 }

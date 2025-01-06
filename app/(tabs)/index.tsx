@@ -5,7 +5,7 @@ import { View,Text,StyleSheet,Animated,TouchableOpacity,Dimensions,ScrollView,} 
 import { ReminderCard } from '@/components/ReminderCard';
 import Entypo from '@expo/vector-icons/Entypo';
 import MapComponent from '@/components/MapComponent';
-// import Header from './Header';
+import Header from '../Header';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const BOX_HEIGHT = 300;
@@ -57,7 +57,7 @@ const Home: React.FC = () => {
 
   return (
     <View style={styles.container}>
-        {/* <Header /> */}
+        <Header /> 
      <MapComponent/>
       <Animated.View
         style={[
@@ -69,16 +69,12 @@ const Home: React.FC = () => {
       >
         <TouchableOpacity onPress={toggleHeight}>
           
-          {ToggleUp?<Entypo name="arrow-with-circle-up" size={24} color="black" />:<Entypo name="arrow-with-circle-down" size={24} color="black" />}
+          {ToggleUp?<Entypo name="arrow-with-circle-up" size={24} color="#DF6316" />:<Entypo name="arrow-with-circle-down" size={24} color="#DF6316" />}
         </TouchableOpacity>
-        <View>
+        <View style={styles.SlidBoxTitleContainer}>
          <Text style={styles.reminderText}>All Remainders </Text> 
-         
-        <Entypo style={styles.addTasIcons} name="add-to-list" size={24} color="black" />
+        <Entypo style={styles.addTasIcons} name="add-to-list" size={24} color="#DF6316" />
         </View>
-        
-        
-        
         <ScrollView contentContainerStyle={styles.boxesContainer}>
           {renderBoxes()}
         </ScrollView>
@@ -92,7 +88,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
   },
   title: {
     fontSize: 24,
@@ -114,6 +109,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
+    paddingBottom:50,
   },
   handle: {
     width: 50,
@@ -125,7 +121,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   boxesContainer: {
-    marginTop: 10,
+    marginTop: -10,
     width: 360,
     alignItems: 'center',
   },
@@ -141,9 +137,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   addTasIcons:{
-    
-    right:-150
-    
+    top:-25,
+    right:-95,    
   },
   boxText: {
     color: '#000',
@@ -151,10 +146,15 @@ const styles = StyleSheet.create({
   },
   reminderText: {
     fontSize: 22,
-    alignItems: 'flex-end',
-    right: 50,
-    position: 'absolute',
     color: '#DF6316',
+    left:-95,
+    position: 'relative',
+  },
+  SlidBoxTitleContainer:{
+    justifyContent: 'space-evenly',
+    alignItems: 'flex-end',
+    marginTop:10,
+    marginBottom:-10
   }
 });
 
