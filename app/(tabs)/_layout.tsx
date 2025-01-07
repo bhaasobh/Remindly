@@ -3,7 +3,6 @@ import React from 'react';
 import { Platform } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
@@ -15,49 +14,51 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   return (
-   
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: '#FFFFFF', 
+        tabBarInactiveTintColor: '#ffd0b3', 
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
         tabBarStyle: Platform.select({
-         
           ios: {
-            // Use a transparent background on iOS to show the blur effect
             position: 'absolute',
-             backgroundColor : 'red',
+            backgroundColor: '#DF6316',
+          },
+          android: {
+            position: 'absolute',
+            backgroundColor: '#DF6316',
+            height:55,
+            padding:5,
           },
           default: {},
         }),
-      }}>
-    
+      }}
+    >
       <Tabs.Screen
         name="explore"
         options={{
           title: 'Personal Items',
-          tabBarIcon: ({ color }) => <MaterialIcons name="backpack" size={24} color="black" />,
+          tabBarIcon: ({ color }) => <MaterialIcons name="backpack" size={24} color={color} />, // Use the dynamic color prop
         }}
-      /> 
-       <Tabs.Screen
+      />
+      <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />, // Use the dynamic color prop
         }}
       />
       <Tabs.Screen
         name="about"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, focused }) => (
-            // <Ionicons name={focused ? 'information-circle' : 'information-circle-outline'} color={color} size={24}/>
-            <MaterialCommunityIcons name="face-man-profile" size={24} color="black" />
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons name="face-man-profile" size={24} color={color} />
           ),
         }}
       />
-    
     </Tabs>
   );
 }
