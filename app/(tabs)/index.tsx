@@ -1,85 +1,67 @@
 import React, { useRef, useState } from 'react';
-
-import { View,Text,StyleSheet,Animated,TouchableOpacity,Dimensions,ScrollView,} from 'react-native';
-
+import { View, Text, StyleSheet, Animated, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
 import { ReminderCard } from '@/components/ReminderCard';
 import Entypo from '@expo/vector-icons/Entypo';
 import MapComponent from '@/components/MapComponent';
-// import Header from './Header';
+import Header from '../Header';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const BOX_HEIGHT = 300;
 const MAX_HEIGHT = SCREEN_HEIGHT * 0.8;
 const MIN_HEIGHT = 300;
-const boxesNumber = 4; 
 
 const Home: React.FC = () => {
   const [boxHeight, setBoxHeight] = useState(BOX_HEIGHT);
   const [icon, setIcon] = useState('^');
-
-  const [ToggleUp , setToggleUp] = useState(true);
-
+  const [toggleUp, setToggleUp] = useState(true);
   const heightAnim = useRef(new Animated.Value(BOX_HEIGHT)).current;
 
+  const reminders = [
+    { id: 1, name: 'Grocery Store', latitude: 32.080880, longitude: 34.780570, address: '123 Market St' },
+    { id: 2, name: 'Pharmacy', latitude: 32.082880, longitude: 34.781570, address: '456 Health Ave' },
+    { id: 3, name: 'Library', latitude: 32.085880, longitude: 34.784570, address: '789 Knowledge Rd' },
+  ];
+
   const toggleHeight = () => {
-    setToggleUp(!ToggleUp);
-    if (icon === '^') {
-      const newHeight = boxHeight < MAX_HEIGHT ? boxHeight + 500 : MAX_HEIGHT;
-      setBoxHeight(newHeight);
-      setIcon('v');
+    setToggleUp(!toggleUp);
+    const newHeight = icon === '^' ? Math.min(boxHeight + 500, MAX_HEIGHT) : Math.max(boxHeight - 500, MIN_HEIGHT);
+    setBoxHeight(newHeight);
+    setIcon(icon === '^' ? 'v' : '^');
 
-      Animated.timing(heightAnim, {
-        toValue: newHeight,
-        duration: 300,
-        useNativeDriver: false,
-      }).start();
-    } else {
-      const newHeight = boxHeight > MIN_HEIGHT ? boxHeight - 500 : MIN_HEIGHT;
-      setBoxHeight(newHeight);
-      setIcon('^');
-
-      Animated.timing(heightAnim, {
-        toValue: newHeight,
-        duration: 300,
-        useNativeDriver: false,
-      }).start();
-    }
+    Animated.timing(heightAnim, {
+      toValue: newHeight,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
   };
 
   const renderBoxes = () => {
-    return Array.from({ length: boxesNumber }, (_, index) => (
-      <View key={index} style={styles.box}>
-        {/* <Text style={styles.boxText}>Box {index + 1}</Text> */}
-        <ReminderCard CardName={'Reminder '+ (index+1)}></ReminderCard>
-      </View>
+    return reminders.map((reminder) => (
+      <TouchableOpacity key={reminder.id} onPress={() => console.log(`Reminder selected: ${reminder.name}`)}>
+        <View style={styles.boxesContainer}>
+          <Text style={styles.boxText}>{reminder.name}</Text>
+        </View>
+      </TouchableOpacity>
     ));
   };
-
+  
   return (
     <View style={styles.container}>
-        {/* <Header /> */}
-     <MapComponent/>
-      <Animated.View
-        style={[
-          styles.slideUpBox,
-          {
-            height: heightAnim,
-          },
-        ]}
-      >
+      <Header />
+      <MapComponent reminders={reminders} />
+      <Animated.View style={[styles.slideUpBox, { height: heightAnim }]}>
+        <View  style={styles.handle}>
         <TouchableOpacity onPress={toggleHeight}>
-          
-          {ToggleUp?<Entypo name="arrow-with-circle-up" size={24} color="black" />:<Entypo name="arrow-with-circle-down" size={24} color="black" />}
+          <Entypo name={toggleUp ? 'arrow-with-circle-up' : 'arrow-with-circle-down'} size={24} color="#DF6316" />
         </TouchableOpacity>
-        <View>
-         <Text style={styles.reminderText}>All Remainders </Text> 
-         
-        <Entypo style={styles.addTasIcons} name="add-to-list" size={24} color="black" />
         </View>
-        
-        
-        
-        <ScrollView contentContainerStyle={styles.boxesContainer}>
+        <View style={styles.SlidBoxTitleContainer}>
+          <Text style={styles.reminderText}>All Reminders</Text>
+          <View  style={styles.AddIconPlace}>
+          <Entypo style={styles.addTasIcons} name="add-to-list" size={24} color="#DF6316" />
+          </View>
+        </View>
+        <ScrollView>
           {renderBoxes()}
         </ScrollView>
       </Animated.View>
@@ -92,7 +74,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
   },
   title: {
     fontSize: 24,
@@ -109,28 +90,21 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     borderWidth: 1,
     borderColor: '#D3D3D3',
-    padding: 20,
     elevation: 0,
     justifyContent: 'center',
-    alignItems: 'center',
     overflow: 'hidden',
+    paddingBottom:50,
+    width:'100%',
+    
   },
-  handle: {
-    width: 50,
-    height: 5,
-    backgroundColor: '#DF6316',
+  handle: {    
     borderRadius: 2.5,
     alignSelf: 'center',
     left: 0,
     marginVertical: 10,
   },
   boxesContainer: {
-    marginTop: 10,
-    width: 360,
-    alignItems: 'center',
-  },
-  box: {
-    width: 380,
+    width: 423,
     height: 50,
     backgroundColor: '#fff',
     borderWidth: 1,
@@ -139,11 +113,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
+    left:-20,
+    top:-10,
   },
   addTasIcons:{
-    
-    right:-150
-    
+    top:-25,
+    right:-95,    
   },
   boxText: {
     color: '#000',
@@ -151,11 +126,22 @@ const styles = StyleSheet.create({
   },
   reminderText: {
     fontSize: 22,
-    alignItems: 'flex-end',
-    right: 50,
-    position: 'absolute',
     color: '#DF6316',
-  }
+    right:245,
+    position: 'relative',
+  },
+  SlidBoxTitleContainer:{
+    justifyContent: 'space-evenly',
+    alignItems: 'flex-end',
+    marginTop:10,
+    marginBottom:-25
+  },
+  AddIconPlace: {    
+    borderRadius: 2.5,
+    right: 110,
+    top: -10,
+    marginVertical: 10,
+  },
 });
 
 export default Home;

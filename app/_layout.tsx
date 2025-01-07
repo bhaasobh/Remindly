@@ -32,7 +32,6 @@ const LayoutContent = ({ colorScheme }: { colorScheme: any }) => {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  // Hide the splash screen once fonts are loaded
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
@@ -40,7 +39,7 @@ const LayoutContent = ({ colorScheme }: { colorScheme: any }) => {
   }, [loaded]);
 
   if (!loaded) {
-    return null; // Optionally, return a loading indicator here
+    return null; 
   }
 
   if (!isLoginComplete) {
