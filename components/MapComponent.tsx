@@ -1,15 +1,9 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, View, Linking } from 'react-native';
+import { StyleSheet, View, Alert } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
-
-interface Reminder {
-  id: number;
-  name: string;
-  latitude: number;
-  longitude: number;
-  address: string;
-}
+import MapViewDirections from 'react-native-maps-directions';
+import { Reminder } from '../models/ReminderModel';
 
 const MapComponent = ({ reminders }: { reminders: Reminder[] }) => {
   const [mapRegion, setMapRegion] = useState({
@@ -18,7 +12,13 @@ const MapComponent = ({ reminders }: { reminders: Reminder[] }) => {
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   });
+
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
+  const [destination, setDestination] = useState<{ latitude: number; longitude: number } | null>(
+    null
+  );
+
+  const GOOGLE_MAPS_API_KEY = 'AIzaSyAp2CByzchy61Z_OQxvuTRRwc3mUInW0RE'; 
 
   useEffect(() => {
     (async () => {
@@ -32,13 +32,14 @@ const MapComponent = ({ reminders }: { reminders: Reminder[] }) => {
           latitudeDelta: 0.0922,
           longitudeDelta: 0.0421,
         });
+      } else {
+        Alert.alert('Permission Denied', 'Location permission is required to use this feature.');
       }
     })();
   }, []);
 
-  const openNavigationApp = (latitude: number, longitude: number) => {
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
-    Linking.openURL(url).catch(() => alert('Unable to open maps'));
+  const handleMarkerPress = (latitude: number, longitude: number) => {
+    setDestination({ latitude, longitude });
   };
 
   return (
@@ -60,9 +61,23 @@ const MapComponent = ({ reminders }: { reminders: Reminder[] }) => {
             coordinate={{ latitude: reminder.latitude, longitude: reminder.longitude }}
             pinColor="blue"
             title={reminder.name}
-            onCalloutPress={() => openNavigationApp(reminder.latitude, reminder.longitude)}
+            onPress={() => handleMarkerPress(reminder.latitude, reminder.longitude)}
           />
         ))}
+        {destination && userLocation && (
+          <MapViewDirections
+            origin={{
+              latitude: userLocation.coords.latitude,
+              longitude: userLocation.coords.longitude,
+            }}
+            destination={destination}
+            apikey={GOOGLE_MAPS_API_KEY}
+            strokeWidth={3}
+            strokeColor="blue"
+            
+          />
+          
+        )}
       </MapView>
     </View>
   );
