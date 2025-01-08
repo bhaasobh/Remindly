@@ -39,6 +39,7 @@ const Home: React.FC = () => {
     { id: 1, name: 'Grocery Store', latitude: 32.080880, longitude: 34.780570, address: '123 Market St', text: 'test test 123 yooooo' },
     { id: 2, name: 'Pharmacy', latitude: 32.082880, longitude: 34.781570, address: '456 Health Ave', text: 'test test 456 yooooo' },
     { id: 3, name: 'Library', latitude: 32.085880, longitude: 34.784570, address: '789 Knowledge Rd', text: 'test test 789 yooooo' },
+    { id:4,  name: 'Supermarket',latitude:32.232730, longitude:34.962729, address: 'Tareq Abd el-Hai St 5, Tira',text: 'milk' },
   ];
 
   const toggleHeight = () => {

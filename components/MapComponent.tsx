@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { StyleSheet, View, Alert } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker ,Circle  } from 'react-native-maps';
 import * as Location from 'expo-location';
 import MapViewDirections from 'react-native-maps-directions';
 import { Reminder } from '../models/ReminderModel';
@@ -56,14 +56,23 @@ const MapComponent = ({ reminders }: { reminders: Reminder[] }) => {
           />
         )}
         {reminders.map((reminder) => (
-          <Marker
-            key={reminder.id}
+        <View key={reminder.id}>
+        <Marker
             coordinate={{ latitude: reminder.latitude, longitude: reminder.longitude }}
             pinColor="blue"
             title={reminder.name}
             onPress={() => handleMarkerPress(reminder.latitude, reminder.longitude)}
-          />
-        ))}
+        />
+        <Circle
+            center={{ latitude: reminder.latitude, longitude: reminder.longitude }}
+            radius={200} 
+            strokeWidth={2}
+            strokeColor="rgba(76, 76, 251, 0.5)" 
+            fillColor="rgba(101, 165, 255, 0.2)" 
+        />
+  </View>
+))}
+
         {destination && userLocation && (
           <MapViewDirections
             origin={{

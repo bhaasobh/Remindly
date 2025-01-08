@@ -12,7 +12,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
   const [reminderType, setReminderType] = useState<'location' | 'time'>('location');
   const [title, setTitle] = useState('');
   const [address, setAddress] = useState('');
-  const [radius, setRadius] = useState('');
+  const [radius, setRadius] = useState('200.00');
   const [time, setTime] = useState('');
   const [details, setDetails] = useState('');
   const [latitude, setLatitude] = useState<number | null>(null);
@@ -87,9 +87,9 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
                 placeholder="Search your address"
                 minLength={2}
                 fetchDetails={true}
-                onPress={handleAddressSelect} // Handle address selection
+                onPress={handleAddressSelect} 
                 query={{
-                  key: 'AIzaSyAp2CByzchy61Z_OQxvuTRRwc3mUInW0RE', // Replace with your API key
+                  key: 'AIzaSyAp2CByzchy61Z_OQxvuTRRwc3mUInW0RE', 
                   language: 'en',
                 }}
                 styles={{
@@ -97,8 +97,6 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
                   textInput: styles.input,
                 }}
               />
-              <Text>Radius:</Text>
-              <TextInput style={styles.input} value={radius} onChangeText={setRadius} keyboardType="numeric" />
               <Text>Time:</Text>
               <TextInput style={styles.input} value={time} onChangeText={setTime} />
               <Text>Reminder details:</Text>
@@ -183,7 +181,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   largeInput: {
-    height: 80,
+    height: 146,
   },
   largeInputForTime: {
     height: 221.5,
