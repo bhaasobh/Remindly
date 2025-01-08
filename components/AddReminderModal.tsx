@@ -1,36 +1,54 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 
 interface AddReminderModalProps {
   modalVisible: boolean;
   setModalVisible: (visible: boolean) => void;
-  onSaveReminder: (reminder: any) => void; 
+  onSaveReminder: (reminder: any) => void;
 }
 
 const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setModalVisible, onSaveReminder }) => {
   const [reminderType, setReminderType] = useState<'location' | 'time'>('location');
   const [title, setTitle] = useState('');
-  const [location, setLocation] = useState('');
+  const [address, setAddress] = useState('');
   const [radius, setRadius] = useState('');
   const [time, setTime] = useState('');
   const [details, setDetails] = useState('');
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
 
   const handleSave = () => {
     const newReminder = {
       title,
       reminderType,
-      location,
+      address,
       radius,
       time,
       details,
+      latitude,
+      longitude,
     };
- 
-    //this to see if the details were saved here remind me to remove it 
-    console.log('Saved reminder:', newReminder); 
-    onSaveReminder(newReminder); 
-    setModalVisible(false); 
+
+    console.log('Saved reminder:', newReminder); // Log to check if details are saved correctly
+    onSaveReminder(newReminder);
+    setModalVisible(false);
   };
-  
+
+  const handleAddressSelect = (data: any, details: any) => {
+    if (details) {
+      const fullAddress = data.description;
+      const lat = details.geometry.location.lat;
+      const lng = details.geometry.location.lng;
+      setAddress(fullAddress); 
+      setLatitude(lat); 
+      setLongitude(lng); 
+      console.log('Selected Address:', fullAddress, 'Latitude:', lat, 'Longitude:', lng);
+    } else {
+      console.warn('No details available for the selected place.');
+      Alert.alert('Error', 'Unable to fetch address details.');
+    }
+  };
 
   return (
     <Modal
@@ -64,8 +82,21 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
 
           {reminderType === 'location' && (
             <>
-              <Text>Location:</Text>
-              <TextInput style={styles.input} value={location} onChangeText={setLocation} />
+              <Text>Address:</Text>
+              <GooglePlacesAutocomplete
+                placeholder="Search your address"
+                minLength={2}
+                fetchDetails={true}
+                onPress={handleAddressSelect} // Handle address selection
+                query={{
+                  key: 'AIzaSyAp2CByzchy61Z_OQxvuTRRwc3mUInW0RE', // Replace with your API key
+                  language: 'en',
+                }}
+                styles={{
+                  container: { flex: 0, width: '100%' },
+                  textInput: styles.input,
+                }}
+              />
               <Text>Radius:</Text>
               <TextInput style={styles.input} value={radius} onChangeText={setRadius} keyboardType="numeric" />
               <Text>Time:</Text>
@@ -83,6 +114,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
               <TextInput style={[styles.input, styles.largeInputForTime]} value={details} onChangeText={setDetails} multiline />
             </>
           )}
+
           <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
             <Text style={styles.saveButtonText}>Add Reminder</Text>
           </TouchableOpacity>
@@ -135,7 +167,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     position: 'absolute',
     top: 505,
-    left: 63,
+    left: 100,
   },
   saveButtonText: {
     color: '#fff',
