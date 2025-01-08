@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView ,Image ,TouchableOpacity} from 'react-native';
-import { useLogin} from "./auth/LoginContext";
+import { useLogin} from "../app/auth/LoginContext";
 
 const Header: React.FC = () => {
   const { isLoginComplete, setIsLoginComplete } = useLogin();
