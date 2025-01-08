@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 
+import config from '../config';
+
 const SignupComponent = ({ visible, onClose }: { visible: boolean; onClose: () => void }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -17,7 +19,7 @@ const SignupComponent = ({ visible, onClose }: { visible: boolean; onClose: () =
 
   const handleRegister = async () => {
     try {
-      const response = await fetch('http://10.0.0.37:8080/api/auth/register', {
+      const response = await fetch(config.SERVER_API+'/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
