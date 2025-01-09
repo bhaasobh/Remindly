@@ -43,6 +43,7 @@ export default function ProfileScreen() {
       <View style={styles.logoutContainer}>
         <Button title="התנתק" color="#ff5c5c" onPress={handleLogout} />
       </View>
+      
     </View>
   );
 }

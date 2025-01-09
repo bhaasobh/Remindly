@@ -1,15 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Image, 
-  Alert, 
-  Modal, 
-  ActivityIndicator 
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, Modal, ActivityIndicator } from 'react-native';
 import 'react-native-reanimated';
 import { LoginProvider, useLogin } from '../app/auth/LoginContext';
 import SignupComponent from './SignupComponenet';
@@ -26,6 +16,8 @@ const Login = () => {
   const handleCloseModal = () => setModalVisible(false);
 
   const handleLogin = async () => {
+    // setIsLoginComplete(true);
+    // return
     if (!username || !password) {
       Alert.alert('Error', 'Please fill in both username and password.');
       return;
