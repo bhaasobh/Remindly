@@ -4,6 +4,7 @@ import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import MapViewDirections from 'react-native-maps-directions';
 import { Reminder } from '../models/ReminderModel';
+import config from '@/config';
 
 const MapComponent = ({ reminders }: { reminders: Reminder[] }) => {
   const [mapRegion, setMapRegion] = useState({
@@ -18,7 +19,7 @@ const MapComponent = ({ reminders }: { reminders: Reminder[] }) => {
     null
   );
 
-  const GOOGLE_MAPS_API_KEY = 'AIzaSyAp2CByzchy61Z_OQxvuTRRwc3mUInW0RE'; 
+  const GOOGLE_MAPS_API_KEY = config.GOOGLE_API; 
 
   useEffect(() => {
     (async () => {

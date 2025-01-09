@@ -1,9 +1,10 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, Animated, TouchableOpacity, Dimensions, ScrollView, Modal,TextInput } from 'react-native';
-import { ReminderCard } from '@/components/ReminderCard';
+import { View, Text, StyleSheet, Animated, TouchableOpacity, Dimensions, ScrollView, Modal } from 'react-native';
 import Entypo from '@expo/vector-icons/Entypo';
 import MapComponent from '@/components/MapComponent';
-import Header from '../Header';
+import Header from '../../components/Header';
+import AddReminderModal from '@/components/AddReminderModal'; 
+import ReminderDetails from '@/components/ReminderDetails';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const BOX_HEIGHT = 300;
@@ -14,9 +15,25 @@ const Home: React.FC = () => {
   const [boxHeight, setBoxHeight] = useState(BOX_HEIGHT);
   const [icon, setIcon] = useState('^');
   const [toggleUp, setToggleUp] = useState(true);
-  const [modalVisible, setModalVisible] = useState(false);
   const [selectedReminder, setSelectedReminder] = useState<any>(null); 
   const heightAnim = useRef(new Animated.Value(BOX_HEIGHT)).current;
+  const [isModalVisible, setModalVisible] = useState(false);
+
+  const [timeReminders, setTimeReminders] = useState<any[]>([]);
+  const [locationReminders, setLocationReminders] = useState<any[]>([]);
+
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
+
+  const saveReminder = (reminder: any) => {
+    if (reminder.reminderType === 'time') {
+      setTimeReminders([...timeReminders, reminder]);
+    } else {
+      setLocationReminders([...locationReminders, reminder]);
+    }
+    setModalVisible(false); 
+  };
 
   const reminders = [
     { id: 1, name: 'Grocery Store', latitude: 32.080880, longitude: 34.780570, address: '123 Market St', text: 'test test 123 yooooo' },
@@ -40,101 +57,19 @@ const Home: React.FC = () => {
   const handleReminderClick = (reminderId: number) => {
     const reminder = reminders.find((reminder) => reminder.id === reminderId);
     if (reminder) {
-      setSelectedReminder(reminder); 
+      setSelectedReminder(reminder);
     }
-  };
-
-  const handleAddReminderClick = () => {
-    setModalVisible(true); 
   };
 
   const renderBoxes = () => {
     return reminders.map((reminder) => (
-      <TouchableOpacity key={reminder.id}>
+      <TouchableOpacity key={reminder.id} onPress={() => handleReminderClick(reminder.id)}>
         <View style={styles.boxesContainer}>
           <Text style={styles.boxText}>{reminder.name}</Text>
         </View>
       </TouchableOpacity>
     ));
   };
-  const AddReminderModal = () => {
-    const [reminderType, setReminderType] = useState<'location' | 'time'>('location');
-    const [title, setTitle] = useState('');
-    const [location, setLocation] = useState('');
-    const [radius, setRadius] = useState('');
-    const [time, setTime] = useState('');
-    const [details, setDetails] = useState('');
-  
-    return (
-      <Modal
-        transparent={true}
-        animationType="slide"
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text style={styles.closemodal}>X</Text>
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>Create a new reminder</Text>
-            <Text>Reminder Title:</Text>
-            <TextInput style={styles.input} value={title} onChangeText={setTitle} />
-  
-            <Text>Reminder Type:</Text>
-            <View style={styles.radioGroup}>
-              <TouchableOpacity onPress={() => setReminderType('location')}>
-                <Text style={[styles.radioOption, reminderType === 'location' && styles.selectedRadio]}>
-                  Location-based
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setReminderType('time')}>
-                <Text style={[styles.radioOption, reminderType === 'time' && styles.selectedRadio]}>
-                  Time-based
-                </Text>
-              </TouchableOpacity>
-            </View>
-  
-            {reminderType === 'location' && (
-              <>
-                <Text>Location:</Text>
-                <TextInput style={styles.input} value={location} onChangeText={setLocation} />
-                <Text>Radius:</Text>
-                <TextInput style={styles.input} value={radius} onChangeText={setRadius} keyboardType="numeric" />
-                <Text>Time:</Text>
-                <TextInput style={styles.input} value={time} onChangeText={setTime} />
-                <Text>Reminder details:</Text>
-                <TextInput
-                  style={[styles.input, styles.largeInput]}
-                  value={details}
-                  onChangeText={setDetails}
-                  multiline
-                 />
-              </>
-            )}
-  
-            {reminderType === 'time' && (
-              <>
-              <Text>Time:</Text>
-              <TextInput style={styles.input} value={time} onChangeText={setTime} />
-              <Text>Reminder details:</Text>
-                <TextInput
-                  style={[styles.input, styles.  largeInputForTime]}
-                  value={details}
-                  onChangeText={setDetails}
-                  multiline
-                 />
-              </>
-            )}
-            <TouchableOpacity style={styles.saveButton} onPress={() => setModalVisible(false)}>
-              <Text style={styles.saveButtonText}>Add Remainder</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    );
-  };
-  
 
   return (
     <View style={styles.container}>
@@ -151,7 +86,7 @@ const Home: React.FC = () => {
           <View style={styles.AddIconPlace}>
             <Entypo
               style={styles.addTasIcons}
-              onPress={handleAddReminderClick}
+              onPress={toggleModal}
               name="add-to-list"
               size={24}
               color="#DF6316"
@@ -160,7 +95,17 @@ const Home: React.FC = () => {
         </View>
         <ScrollView>{renderBoxes()}</ScrollView>
       </Animated.View>
-      <AddReminderModal />
+      <AddReminderModal
+        modalVisible={isModalVisible}
+        setModalVisible={setModalVisible}
+        onSaveReminder={saveReminder}
+      />
+      <Modal visible={selectedReminder !== null} animationType="slide" transparent={true}>
+        <ReminderDetails
+          reminder={selectedReminder!}
+          onClose={() => setSelectedReminder(null)} 
+        />
+      </Modal>
     </View>
   );
 };
@@ -281,34 +226,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#DF6316',
-    borderRadius: 5,
-    padding: 8,
-    marginBottom: 10,
-    width: '100%',
-  },
-  largeInput: {
-    height: 80,
-  },
-  largeInputForTime: {
-    height: 221.5,
-  },
-  radioGroup: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 10,
-    top:3,
-  },
-  radioOption: {
-    color: '#d1936b',
-    fontSize: 16,
-  },
-  selectedRadio: {
-    color: '#DF6316',
-    fontWeight: 'bold',
   },
 });
 
