@@ -1,148 +1,162 @@
-
-import React, { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import React, { useState } from 'react';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  StyleSheet, 
+  Image, 
+  Alert, 
+  Modal, 
+  ActivityIndicator 
+} from 'react-native';
 import 'react-native-reanimated';
-import { LoginProvider, useLogin } from "../app/auth/LoginContext"; // Import LoginContext
-import { Button } from 'react-native';
+import { LoginProvider, useLogin } from '../app/auth/LoginContext';
 import SignupComponent from './SignupComponenet';
+import config from '@/config';
 
- 
 const Login = () => {
-     const { isLoginComplete, setIsLoginComplete } = useLogin();
-     const [modalVisible, setModalVisible] = useState(false); 
+  const { isLoginComplete, setIsLoginComplete } = useLogin();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false); // Loading state
 
-     const handleOpenModal = () => setModalVisible(true);
-     const handleCloseModal = () => setModalVisible(false);
+  const handleOpenModal = () => setModalVisible(true);
+  const handleCloseModal = () => setModalVisible(false);
+
+  const handleLogin = async () => {
+    if (!username || !password) {
+      Alert.alert('Error', 'Please fill in both username and password.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(config.SERVER_API + '/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Alert.alert('Success', 'Login successful!');
+        setIsLoginComplete(true); // Update context state
+      } else {
+        console.log(data);
+        Alert.alert('Error', data.error || 'Login failed!');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      Alert.alert('Error', 'An error occurred during login.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <LoginProvider>
-     <View style={styles.container1}> 
-            <View style={styles.topBackground} />
-            <Image source={require('../assets/images/Logo.png')} style={styles.Logo} />
-            <TextInput style={styles.input} placeholder="UserName" />
-            <TextInput style={styles.input} placeholder="Password" secureTextEntry />
-            <TouchableOpacity style={styles.button} onPress={() => setIsLoginComplete(true)}>
-              <Text style={styles.buttonText}>Log In</Text>
-            </TouchableOpacity>
-            <Button title="Sign Up" onPress={handleOpenModal} />
-            <SignupComponent visible={modalVisible} onClose={handleCloseModal} />
-            
-          </View>
-          
-          </LoginProvider>
-          
-  )
-}
+      <View style={styles.container}>
+        <View style={styles.topBackground} />
+        <Image source={require('../assets/images/Logo.png')} style={styles.logo} />
+        <TextInput
+          style={styles.input}
+          placeholder="Username"
+          value={username}
+          onChangeText={setUsername}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <Text style={styles.buttonText}>Log In</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleOpenModal}>
+          <Text style={styles.signUpText}>Sign Up</Text>
+        </TouchableOpacity>
+        <SignupComponent visible={modalVisible} onClose={handleCloseModal} />
 
-export default Login
+        {loading && (
+          <Modal transparent={true} animationType="fade" visible={loading}>
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator size="large" color="#DF6316" />
+              <Text style={styles.loadingText}>Logging in...</Text>
+            </View>
+          </Modal>
+        )}
+      </View>
+    </LoginProvider>
+  );
+};
 
-const styles2 = StyleSheet.create({
-  centeredView: {
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#FF9A5B',
+  },
+  topBackground: {
+    width: '110%',
+    height: '100%',
+    backgroundColor: '#ffff',
+    borderTopLeftRadius: 124,
+    borderTopRightRadius: 124,
+    position: 'absolute',
+    top: '10%',
+  },
+  input: {
+    width: 282,
+    height: 50,
+    marginBottom: 20,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: '#DF6316',
+    borderRadius: 5,
+    backgroundColor: '#fff',
+  },
+  button: {
+    backgroundColor: '#DF6316',
+    paddingVertical: 13,
+    paddingHorizontal: 40,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  signUpText: {
+    color: '#DF6316',
+    paddingVertical: 10,
+    textDecorationLine: 'underline',
+  },
+  logo: {
+    width: 333,
+    height: 247,
+    marginBottom: 20,
+  },
+  loadingOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  modalView: {
-    width: '90%',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  label: {
-    fontSize: 14,
-    marginBottom: 5,
-    color: '#333',
-  },
-  input: {
-    height: 40,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    marginBottom: 15,
-    paddingHorizontal: 10,
-    backgroundColor: '#f9f9f9',
-  },
-  button: {
-    borderRadius: 5,
-    padding: 10,
-    marginVertical: 5,
-    alignItems: 'center',
-  },
-  buttonSignIn: {
-    backgroundColor: '#4CAF50',
-  },
-  buttonClose: {
-    backgroundColor: '#f44336',
-  },
-  textStyle: {
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },buttonOpen: {
-    backgroundColor: '#F194FF',
+  loadingText: {
+    marginTop: 10,
+    color: '#fff',
+    fontSize: 16,
   },
 });
 
-
-const styles = StyleSheet.create({
-    container1: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 20,
-      backgroundColor: '#FF9A5B',
-    },
-    topBackground: {
-      width: '110%',
-      height: '100%',
-      backgroundColor: '#ffff',
-      borderTopLeftRadius: 124,
-      borderTopRightRadius: 124,
-      position: 'absolute',
-      top: '10%',
-    },
-    
-    input: {
-      width: 282,
-      height: 50,
-      marginBottom: 20,
-      paddingHorizontal: 10,
-      borderWidth: 1,
-      borderColor: '#DF6316',
-      borderRadius: 5,
-      backgroundColor: '#fff',
-    },
-    button: {
-      backgroundColor: '#DF6316',
-      paddingVertical: 13,
-      paddingHorizontal: 40,
-      borderRadius: 5,
-    },
-    buttonText: {
-      color: '#fff',
-      fontSize: 16,
-      textAlign: 'center',
-    },
-    SignIn: {
-      color: '#DF6316',
-      paddingVertical: 10,
-      textDecorationLine: 'underline',
-    },
-    Logo: {
-      width: 333,
-      height: 247,
-    }
-  });
-  
+export default Login;

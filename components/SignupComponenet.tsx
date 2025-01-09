@@ -40,19 +40,17 @@ const SignupComponent = ({ visible, onClose }: { visible: boolean; onClose: () =
         onClose(); // Close the modal
       } else {
         console.log(data);
-       // console.log(data.err.errorResponse.errmsg)
-       if (data.error && (!data.err || data.err.code === undefined)) {
-        Alert.alert('Error', data.error);
-      }else 
-        if(data.err.code == '11000')
-        {
-          Alert.alert('Error', 'username is taking try another one');
-        }else
-        Alert.alert('Error', data.err.errorResponse.errmsg || 'Registration failed!');
+        if (data.error && (!data.err || data.err.code === undefined)) {
+          Alert.alert('Error', data.error);
+        } else if (data.err?.code === 11000) {
+          Alert.alert('Error', 'Username is already taken. Please try another one.');
+        } else {
+          Alert.alert('Error', data.err?.errorResponse?.errmsg || 'Registration failed!');
+        }
       }
     } catch (error) {
       console.error('Error:', error);
-      Alert.alert('Error', 'An error occurred during registration.');
+      Alert.alert('Error', 'An unexpected error occurred during registration.');
     } finally {
       setLoading(false); // Hide loading modal
     }
@@ -139,6 +137,7 @@ const SignupComponent = ({ visible, onClose }: { visible: boolean; onClose: () =
         </View>
       </Modal>
 
+      {/* Loading Modal */}
       {loading && (
         <Modal transparent={true} animationType="fade" visible={loading}>
           <View style={styles.loadingOverlay}>
