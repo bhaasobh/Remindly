@@ -1,12 +1,21 @@
 import { useState, useEffect } from 'react';
 import { StyleSheet, View, Alert } from 'react-native';
-import MapView, { Marker ,Circle  } from 'react-native-maps';
+import MapView, { Marker, Circle } from 'react-native-maps';
 import * as Location from 'expo-location';
 import MapViewDirections from 'react-native-maps-directions';
-import { Reminder } from '../models/ReminderModel';
 import config from '@/config';
+import PushNotification from './PushNotification'; 
 
-const MapComponent = ({ reminders }: { reminders: Reminder[] }) => {
+interface Reminder {
+  id: number;
+  name: string;
+  latitude: number;
+  longitude: number;
+  address: string;
+  text: string;
+}
+
+const MapComponent = ({ reminders: initialReminders }: { reminders: Reminder[] }) => {
   const [mapRegion, setMapRegion] = useState({
     latitude: 32.806482,
     longitude: 35.151898,
@@ -15,12 +24,10 @@ const MapComponent = ({ reminders }: { reminders: Reminder[] }) => {
   });
 
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
-  const [destination, setDestination] = useState<{ latitude: number; longitude: number } | null>(
-    null
-  );
+  const [destination, setDestination] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [reminders, setReminders] = useState<Reminder[]>(initialReminders);
 
-  const GOOGLE_MAPS_API_KEY = config.GOOGLE_API; 
-
+  const GOOGLE_MAPS_API_KEY = config.GOOGLE_API;
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -36,8 +43,54 @@ const MapComponent = ({ reminders }: { reminders: Reminder[] }) => {
       } else {
         Alert.alert('Permission Denied', 'Location permission is required to use this feature.');
       }
-    })();
+    })();    const data = require('../assets/reminders.json'); 
+    setReminders(data);
+
   }, []);
+
+  useEffect(() => {
+    
+  }, []);
+
+  const isWithinRadius = (reminderLat: number, reminderLong: number) => {
+    if (userLocation) {
+      const distance = getDistance(
+        { latitude: userLocation.coords.latitude, longitude: userLocation.coords.longitude },
+        { latitude: reminderLat, longitude: reminderLong }
+      );
+      return distance <= 200; 
+    }
+    return false;
+  };
+
+  const getDistance = (location1: { latitude: number; longitude: number }, location2: { latitude: number; longitude: number }) => {
+    const toRadians = (degree: number) => degree * (Math.PI / 180);
+    const lat1 = location1.latitude;
+    const lon1 = location1.longitude;
+    const lat2 = location2.latitude;
+    const lon2 = location2.longitude;
+
+    const R = 6371; 
+    const dLat = toRadians(lat2 - lat1);
+    const dLon = toRadians(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c * 1000; 
+
+    return distance;
+  };
+
+  useEffect(() => {
+    reminders.forEach((reminder) => {
+      if (isWithinRadius(reminder.latitude, reminder.longitude)) {
+        Alert.alert('Reminder', `You are near ${reminder.name}`);
+        <PushNotification title="Reminder" message={`You are near ${reminder.name}`} />;
+      }
+    });
+  }, [userLocation, reminders]);
 
   const handleMarkerPress = (latitude: number, longitude: number) => {
     setDestination({ latitude, longitude });
@@ -57,22 +110,22 @@ const MapComponent = ({ reminders }: { reminders: Reminder[] }) => {
           />
         )}
         {reminders.map((reminder) => (
-        <View key={reminder.id}>
-        <Marker
-            coordinate={{ latitude: reminder.latitude, longitude: reminder.longitude }}
-            pinColor="blue"
-            title={reminder.name}
-            onPress={() => handleMarkerPress(reminder.latitude, reminder.longitude)}
-        />
-        <Circle
-            center={{ latitude: reminder.latitude, longitude: reminder.longitude }}
-            radius={200} 
-            strokeWidth={2}
-            strokeColor="rgba(76, 76, 251, 0.5)" 
-            fillColor="rgba(101, 165, 255, 0.2)" 
-        />
-  </View>
-))}
+          <View key={reminder.id}>
+            <Marker
+              coordinate={{ latitude: reminder.latitude, longitude: reminder.longitude }}
+              pinColor="blue"
+              title={reminder.name}
+              onPress={() => handleMarkerPress(reminder.latitude, reminder.longitude)}
+            />
+            <Circle
+              center={{ latitude: reminder.latitude, longitude: reminder.longitude }}
+              radius={200}
+              strokeWidth={2}
+              strokeColor="rgba(76, 76, 251, 0.5)"
+              fillColor="rgba(101, 165, 255, 0.2)"
+            />
+          </View>
+        ))}
 
         {destination && userLocation && (
           <MapViewDirections
@@ -84,9 +137,7 @@ const MapComponent = ({ reminders }: { reminders: Reminder[] }) => {
             apikey={GOOGLE_MAPS_API_KEY}
             strokeWidth={3}
             strokeColor="blue"
-            
           />
-          
         )}
       </MapView>
     </View>

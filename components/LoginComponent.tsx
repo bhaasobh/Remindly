@@ -36,7 +36,6 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
-        Alert.alert('Success', 'Login successful!');
         setIsLoginComplete(true); // Update context state
       } else {
         console.log(data);

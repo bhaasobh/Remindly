@@ -5,9 +5,9 @@ import { useRouter } from 'expo-router';
 
 // רשימה לדוגמה של תזכורות
 const reminders = [
-  { id: '1', title: 'לקנות חלב' },
-  { id: '2', title: 'לשלוח מייל' },
-  { id: '3', title: 'תור לרופא' },
+  { id: '1', title: 'Buy milk '},
+  { id: '2', title: ' Send an email' },
+  { id: '3', title: 'A doctor apointment ' },
 ];
 
 export default function ProfileScreen() {
@@ -31,9 +31,9 @@ export default function ProfileScreen() {
         source={{ uri: 'https://i.pravatar.cc/300' }}
         style={styles.profileImage}
       />
-      <Text style={styles.userName}>שלום, יוסי כהן</Text>
+      <Text style={styles.userName}>Hi, Bahaa</Text>
       
-      <Text style={styles.sectionTitle}>התזכורות שלך</Text>
+      <Text style={styles.sectionTitle}>Your reminders</Text>
       <FlatList
         data={reminders}
         keyExtractor={(item) => item.id}
