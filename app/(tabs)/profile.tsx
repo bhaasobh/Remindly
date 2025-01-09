@@ -1,6 +1,5 @@
 import { Text, View, StyleSheet, Button } from 'react-native';
 import { useLogin} from "../auth/LoginContext";
-import NotificationApp from '@/components/NotificationApp';
 
 
 
@@ -11,7 +10,6 @@ export default function AboutScreen() {
     <View style={styles.container}>
       <Text style={styles.text}>About screenn</Text>
       <View style={styles.container2}>
-        {/* <NotificationApp ></NotificationApp> */}
       </View>
       
     </View>
