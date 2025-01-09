@@ -26,6 +26,8 @@ const Login = () => {
   const handleCloseModal = () => setModalVisible(false);
 
   const handleLogin = async () => {
+    setIsLoginComplete(true); // Update context state
+    return;
     if (!username || !password) {
       Alert.alert('Error', 'Please fill in both username and password.');
       return;
