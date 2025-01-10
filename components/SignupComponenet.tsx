@@ -1,22 +1,16 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-  TextInput,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import {Modal,View,Text,Pressable,StyleSheet,TextInput,Alert,ActivityIndicator,} from 'react-native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 
 import config from '../config';
 
+
+
 const SignupComponent = ({ visible, onClose }: { visible: boolean; onClose: () => void }) => {
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [address, setAddress] = useState('');
+  const [address, setAddress] = useState<{ name: string; lat: number; lng: number } | null>(null);
   const [loading, setLoading] = useState(false); // State for loading
 
   const handleRegister = async () => {
@@ -30,11 +24,12 @@ const SignupComponent = ({ visible, onClose }: { visible: boolean; onClose: () =
         body: JSON.stringify({
           username,
           password,
-          address,
+          address, // Send the structured address
         }),
       });
+  
       const data = await response.json();
-
+  
       if (response.ok) {
         Alert.alert('Success', 'Registration successful!');
         onClose(); // Close the modal
@@ -55,17 +50,32 @@ const SignupComponent = ({ visible, onClose }: { visible: boolean; onClose: () =
       setLoading(false); // Hide loading modal
     }
   };
+  
 
   const handleAddressSelect = (data: any, details: any) => {
     if (details) {
-      const fullAddress = data.description;
-      setAddress(fullAddress);
-      console.log('Selected Address:', fullAddress);
+      const name = data.description;
+      const { lat, lng } = details.geometry.location;
+      
+  
+      // Update the address state with structured data
+      setAddress({
+        name, // Full address description
+        lat,  // Latitude
+        lng  // Longitude
+      });
+  
+      console.log('Selected Address:', {
+        name,
+        lat,
+        lng,
+      });
     } else {
       console.warn('No details available for the selected place.');
       Alert.alert('Error', 'Unable to fetch address details.');
     }
   };
+  
 
   return (
     <>
@@ -77,7 +87,6 @@ const SignupComponent = ({ visible, onClose }: { visible: boolean; onClose: () =
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
             <Text style={styles.modalTitle}>Sign Up</Text>
-
             <Text style={styles.label}>Username</Text>
             <TextInput
               style={styles.input}
@@ -86,7 +95,6 @@ const SignupComponent = ({ visible, onClose }: { visible: boolean; onClose: () =
               value={username}
               onChangeText={setUsername}
             />
-
             <Text style={styles.label}>Password</Text>
             <TextInput
               style={styles.input}
