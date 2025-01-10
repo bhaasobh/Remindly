@@ -10,11 +10,11 @@
     },
     {
       "id": 2,
-      "name": "Pharmacy",
-      "latitude": 32.082880,
-      "longitude": 34.781570,
-      "address": "456 Health Ave",
+      "name": "coffee shop",
+      "latitude": 32.088773,
+      "longitude": 34.802112,
+      "address": "HaTa'as St 4, Ramat Gan",
       "radius": 50,
-      "text": "Pick up medicine"
+      "text": "Pick up a cake"
     }
   ] 

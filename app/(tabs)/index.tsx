@@ -10,14 +10,16 @@ const SCREEN_HEIGHT = Dimensions.get('window').height;
 const BOX_HEIGHT = 300;
 const MAX_HEIGHT = SCREEN_HEIGHT * 0.8;
 const MIN_HEIGHT = 300;
+
 interface Reminder {
   id: number;
-  name: string;
+  title: string;
   latitude: number;
   longitude: number;
   address: string;
   text: string;
 }
+
 
 const Home: React.FC = () => {
   const [reminders, setReminders] = useState<Reminder[]>([]);
@@ -71,7 +73,7 @@ const Home: React.FC = () => {
     return reminders.map((reminder) => (
       <TouchableOpacity key={reminder.id} onPress={() => handleReminderClick(reminder.id)}>
         <View style={styles.boxesContainer}>
-          <Text style={styles.boxText}>{reminder.name}</Text>
+          <Text style={styles.boxText}>{reminder.title}</Text>
         </View>
       </TouchableOpacity>
     ));
