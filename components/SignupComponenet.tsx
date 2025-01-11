@@ -1,22 +1,29 @@
 import React, { useState } from 'react';
-import {Modal,View,Text,Pressable,StyleSheet,TextInput,Alert,ActivityIndicator,} from 'react-native';
+import {
+  Modal,
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 
 import config from '../config';
 
-
-
 const SignupComponent = ({ visible, onClose }: { visible: boolean; onClose: () => void }) => {
-
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [gender, setGender] = useState(''); // New gender state
   const [address, setAddress] = useState<{ name: string; lat: number; lng: number } | null>(null);
   const [loading, setLoading] = useState(false); // State for loading
 
   const handleRegister = async () => {
     setLoading(true); // Show loading modal
     try {
-      const response = await fetch(config.SERVER_API + '/auth/register', {
+      const response = await fetch(config.SERVER_API + '/users/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -24,12 +31,15 @@ const SignupComponent = ({ visible, onClose }: { visible: boolean; onClose: () =
         body: JSON.stringify({
           username,
           password,
-          address, // Send the structured address
+          // Include gender in the request
+          address, 
+          gender, // Send the structured address
         }),
       });
-  
+
       const data = await response.json();
-  
+      
+      console.log(JSON.stringify);
       if (response.ok) {
         Alert.alert('Success', 'Registration successful!');
         onClose(); // Close the modal
@@ -44,27 +54,25 @@ const SignupComponent = ({ visible, onClose }: { visible: boolean; onClose: () =
         }
       }
     } catch (error) {
+     
       console.error('Error:', error);
       Alert.alert('Error', 'An unexpected error occurred during registration.');
     } finally {
       setLoading(false); // Hide loading modal
     }
   };
-  
 
   const handleAddressSelect = (data: any, details: any) => {
     if (details) {
       const name = data.description;
       const { lat, lng } = details.geometry.location;
-      
-  
-      // Update the address state with structured data
+
       setAddress({
-        name, // Full address description
-        lat,  // Latitude
-        lng  // Longitude
+        name,
+        lat,
+        lng,
       });
-  
+
       console.log('Selected Address:', {
         name,
         lat,
@@ -75,7 +83,6 @@ const SignupComponent = ({ visible, onClose }: { visible: boolean; onClose: () =
       Alert.alert('Error', 'Unable to fetch address details.');
     }
   };
-  
 
   return (
     <>
@@ -105,6 +112,25 @@ const SignupComponent = ({ visible, onClose }: { visible: boolean; onClose: () =
               onChangeText={setPassword}
             />
 
+            <Text style={styles.label}>Gender</Text>
+            <View style={styles.genderContainer}>
+              <Pressable
+                style={[styles.genderButton, gender === 'male' && styles.genderButtonActive]}
+                onPress={() => setGender('male')}>
+                <Text style={styles.genderText}>Male</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.genderButton, gender === 'female' && styles.genderButtonActive]}
+                onPress={() => setGender('female')}>
+                <Text style={styles.genderText}>Female</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.genderButton, gender === 'other' && styles.genderButtonActive]}
+                onPress={() => setGender('other')}>
+                <Text style={styles.genderText}>Other</Text>
+              </Pressable>
+            </View>
+
             <Text style={styles.label}>Address</Text>
             <GooglePlacesAutocomplete
               placeholder="Search your address"
@@ -112,7 +138,7 @@ const SignupComponent = ({ visible, onClose }: { visible: boolean; onClose: () =
               fetchDetails={true}
               onPress={handleAddressSelect}
               query={{
-                key: config.GOOGLE_API, // Replace with your API key
+                key: config.GOOGLE_API,
                 language: 'en',
               }}
               styles={{
@@ -145,7 +171,6 @@ const SignupComponent = ({ visible, onClose }: { visible: boolean; onClose: () =
         </View>
       </Modal>
 
-      {/* Loading Modal */}
       {loading && (
         <Modal transparent={true} animationType="fade" visible={loading}>
           <View style={styles.loadingOverlay}>
@@ -167,7 +192,7 @@ const styles = StyleSheet.create({
   },
   modalView: {
     width: '90%',
-    height: '70%',
+    height: '80%',
     backgroundColor: 'white',
     borderRadius: 10,
     padding: 20,
@@ -219,6 +244,28 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  genderContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 15,
+  },
+  genderButton: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 10,
+    marginHorizontal: 5,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    backgroundColor: '#f9f9f9',
+  },
+  genderButtonActive: {
+    backgroundColor: '#4CAF50',
+  },
+  genderText: {
+    color: '#333',
+    fontWeight: 'bold',
   },
   loadingOverlay: {
     flex: 1,
