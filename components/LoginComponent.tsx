@@ -6,7 +6,8 @@ import SignupComponent from './SignupComponenet';
 import config from '@/config';
 
 const Login = () => {
-  const { isLoginComplete, setIsLoginComplete } = useLogin();
+  
+  const { setIsLoginComplete ,setUserId ,userId } = useLogin();
   const [modalVisible, setModalVisible] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -36,6 +37,7 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
+        Alert.alert('Success', 'Login successful!');
         setIsLoginComplete(true); // Update context state
       } else {
         console.log(data);
