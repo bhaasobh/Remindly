@@ -3,12 +3,16 @@ import { View, Text, StyleSheet, SafeAreaView ,Image ,TouchableOpacity} from 're
 import { useLogin} from "../app/auth/LoginContext";
 
 const Header: React.FC = () => {
-  const { isLoginComplete, setIsLoginComplete } = useLogin();
+  const { isLoginComplete, setIsLoginComplete , setUserId } = useLogin();
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
       <Image source={require('../assets/images/HeaderLogo.png')} style={styles.Logo} />
-      <TouchableOpacity onPress={() => setIsLoginComplete(false)}>
+      <TouchableOpacity onPress={() =>
+        {
+          setIsLoginComplete(false);
+          setUserId('');
+        } }>
           <Text style={styles.headerText}>Log out</Text>
       </TouchableOpacity>
       </View>
