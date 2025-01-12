@@ -1,72 +1,100 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, FlatList, Button } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, ActivityIndicator } from 'react-native';
+import { Entypo, Feather } from '@expo/vector-icons';
 import { useLogin } from '../auth/LoginContext';
-import { useRouter } from 'expo-router';
-
-// רשימה לדוגמה של תזכורות
-const reminders = [
-  { id: '1', title: 'Buy milk '},
-  { id: '2', title: ' Send an email' },
-  { id: '3', title: 'A doctor apointment ' },
-];
-
+import config from '../../config';
 
 export default function ProfileScreen() {
-  const [firstName, setFirstName] = useState('David');
-  const [lastName, setLastName] = useState('Smith');
-  const [email, setEmail] = useState('davidsmith@pro');
-  const [address, setAddress] = useState('123 Main St, Kyiv, Ukraine');
+  const { userId } = useLogin(); // שימוש בקונטקסט כדי לקבל userId
+  const [userData, setUserData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    address: '',
+    gender: '', // נוסיף gender לפרופיל
+  });
+  const [loading, setLoading] = useState(true); // מצב טעינה
 
-  const handleNext = () => {
-    // פעולה לביצוע בלחיצה על הכפתור
-    console.log('Next clicked!');
-  };
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        console.log('Fetching user data for userId:', userId); // Debug userId
+        const response = await fetch(`${config.SERVER_API}/users/${userId}`);
+        const data = await response.json();
+
+        console.log('Server response:', data); // Debug server response
+
+        if (response.ok) {
+          // עיבוד נתונים לייצוג מחרוזות בלבד
+          setUserData({
+            firstName: data.username || '',
+            lastName: data.lastName || '',
+            email: data.email || '',
+            address: data.address?.name || '', // שימוש ב-name של address
+            gender: data.gender || '', // נוסיף gender
+          });
+        } else {
+          Alert.alert('Error', data.error || 'Failed to fetch user data.');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        Alert.alert('Error', 'An error occurred while fetching user data.');
+      } finally {
+        setLoading(false); // עצירת מצב הטעינה
+      }
+    };
+
+    fetchUserData();
+  }, [userId]);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#DF6316" />
+        <Text>Loading your profile...</Text>
+      </View>
+    );
+  }
+
+  // קביעת תמונת פרופיל לפי מגדר
+  const profileImageUri =
+    userData.gender === 'male'
+      ? 'https://randomuser.me/api/portraits/men/1.jpg' // תמונה לגבר
+      : userData.gender === 'female'
+      ? 'https://randomuser.me/api/portraits/women/1.jpg' // תמונה לאישה
+      : 'https://via.placeholder.com/100'; // תמונת ברירת מחדל
 
   return (
     <View style={styles.container}>
+      {/* כותרת עליונה */}
+      <View style={styles.header}>
+        <TouchableOpacity>
+          <Entypo name="chevron-left" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>Profile</Text>
+        <TouchableOpacity>
+          <Feather name="more-vertical" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
 
-      <Image
-        source={{ uri: 'https://i.pravatar.cc/300' }}
-        style={styles.profileImage}
-      />
-      <Text style={styles.userName}>Hi, Bahaa</Text>
-      
-      <Text style={styles.sectionTitle}>Your reminders</Text>
-      <FlatList
-        data={reminders}
-        keyExtractor={(item) => item.id}
-        renderItem={renderReminder}
-      />
-
+      {/* חלק עליון - רקע צבעוני */}
+      <View style={styles.profileSection}>
+        <Image source={{ uri: profileImageUri }} style={styles.profileImage} />
+        <Text style={styles.profileName}>{`${userData.firstName} ${userData.lastName}`}</Text>
+        <Text style={styles.profileLocation}>{userData.address}</Text>
+      </View>
 
       {/* טופס */}
       <View style={styles.form}>
         <Text>Your Name</Text>
-        <TextInput
-          style={styles.input}
-          value={firstName}
-          onChangeText={setFirstName}
-        />
+        <TextInput style={styles.input} value={userData.firstName} />
         <Text>Last Name</Text>
-        <TextInput
-          style={styles.input}
-          value={lastName}
-          onChangeText={setLastName}
-        />
+        <TextInput style={styles.input} value={userData.lastName} />
         <Text>Your Email</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-        />
+        <TextInput style={styles.input} value={userData.email} />
         <Text>Your Address</Text>
-        <TextInput
-          style={styles.input}
-          value={address}
-          onChangeText={setAddress}
-        />
+        <TextInput style={styles.input} value={userData.address} />
       </View>
-      
     </View>
   );
 }
@@ -91,7 +119,7 @@ const styles = StyleSheet.create({
   },
   profileSection: {
     alignItems: 'center',
-    backgroundColor: '#DF6316', // רקע צבעוני
+    backgroundColor: '#DF6316',
     paddingVertical: 65,
     marginBottom: 20,
   },
@@ -122,5 +150,10 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 15,
     backgroundColor: '#fff',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
