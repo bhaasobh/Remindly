@@ -19,6 +19,7 @@ const Login = () => {
   const handleLogin = async () => {
     // setIsLoginComplete(true);
     // return
+
     if (!username || !password) {
       Alert.alert('Error', 'Please fill in both username and password.');
       return;

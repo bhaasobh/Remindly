@@ -10,23 +10,21 @@ const reminders = [
   { id: '3', title: 'A doctor apointment ' },
 ];
 
+
 export default function ProfileScreen() {
-  const { setIsLoginComplete } = useLogin();
-  const router = useRouter();
+  const [firstName, setFirstName] = useState('David');
+  const [lastName, setLastName] = useState('Smith');
+  const [email, setEmail] = useState('davidsmith@pro');
+  const [address, setAddress] = useState('123 Main St, Kyiv, Ukraine');
 
-  const handleLogout = () => {
-    setIsLoginComplete(false);
-    router.replace('../pages/login');  // ניתוב למסך התחברות
+  const handleNext = () => {
+    // פעולה לביצוע בלחיצה על הכפתור
+    console.log('Next clicked!');
   };
-
-  const renderReminder = ({ item }: { item: { title: string } }) => (
-    <View style={styles.reminderItem}>
-      <Text style={styles.reminderText}>{item.title}</Text>
-    </View>
-  );
 
   return (
     <View style={styles.container}>
+
       <Image
         source={{ uri: 'https://i.pravatar.cc/300' }}
         style={styles.profileImage}
@@ -40,8 +38,33 @@ export default function ProfileScreen() {
         renderItem={renderReminder}
       />
 
-      <View style={styles.logoutContainer}>
-        <Button title="התנתק" color="#ff5c5c" onPress={handleLogout} />
+
+      {/* טופס */}
+      <View style={styles.form}>
+        <Text>Your Name</Text>
+        <TextInput
+          style={styles.input}
+          value={firstName}
+          onChangeText={setFirstName}
+        />
+        <Text>Last Name</Text>
+        <TextInput
+          style={styles.input}
+          value={lastName}
+          onChangeText={setLastName}
+        />
+        <Text>Your Email</Text>
+        <TextInput
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+        />
+        <Text>Your Address</Text>
+        <TextInput
+          style={styles.input}
+          value={address}
+          onChangeText={setAddress}
+        />
       </View>
       
     </View>
@@ -51,44 +74,53 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#f4f4f4',
-    padding: 20,
-    marginTop : 70
+    backgroundColor: '#DF6316',
+    padding: 15,
+    paddingTop: 40,
+  },
+  headerText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  profileSection: {
+    alignItems: 'center',
+    backgroundColor: '#DF6316', // רקע צבעוני
+    paddingVertical: 65,
+    marginBottom: 20,
   },
   profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    marginBottom: 20,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#ddd',
+    marginBottom: 10,
   },
-  userName: {
-    fontSize: 24,
+  profileName: {
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 10,
+    color: '#fff',
   },
-  sectionTitle: {
-    fontSize: 18,
-    color: '#555',
-    marginBottom: 20,
-  },
-  reminderItem: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
-    width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  reminderText: {
+  profileLocation: {
     fontSize: 16,
+    color: '#fff',
+    marginBottom: 5,
   },
-  logoutContainer: {
-    marginTop: 30,
+  form: {
+    margin: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 15,
+    backgroundColor: '#fff',
   },
 });
