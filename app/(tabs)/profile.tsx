@@ -1,6 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { Entypo, Feather } from '@expo/vector-icons';
+import React from 'react';
+import { View, Text, StyleSheet, Image, FlatList, Button } from 'react-native';
+import { useLogin } from '../auth/LoginContext';
+import { useRouter } from 'expo-router';
+
+// רשימה לדוגמה של תזכורות
+const reminders = [
+  { id: '1', title: 'Buy milk '},
+  { id: '2', title: ' Send an email' },
+  { id: '3', title: 'A doctor apointment ' },
+];
+
 
 export default function ProfileScreen() {
   const [firstName, setFirstName] = useState('David');
@@ -15,26 +24,20 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      {/* כותרת עליונה */}
-      <View style={styles.header}>
-        <TouchableOpacity>
-          <Entypo name="chevron-left" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Profile</Text>
-        <TouchableOpacity>
-          <Feather name="more-vertical" size={24} color="#fff" />
-        </TouchableOpacity>
-      </View>
 
-      {/* חלק עליון - רקע צבעוני */}
-      <View style={styles.profileSection}>
-        <Image
-          source={{ uri: 'https://via.placeholder.com/100' }}
-          style={styles.profileImage}
-        />
-        <Text style={styles.profileName}>David Smith</Text>
-        <Text style={styles.profileLocation}>Kyiv, Ukraine</Text>
-      </View>
+      <Image
+        source={{ uri: 'https://i.pravatar.cc/300' }}
+        style={styles.profileImage}
+      />
+      <Text style={styles.userName}>Hi, Bahaa</Text>
+      
+      <Text style={styles.sectionTitle}>Your reminders</Text>
+      <FlatList
+        data={reminders}
+        keyExtractor={(item) => item.id}
+        renderItem={renderReminder}
+      />
+
 
       {/* טופס */}
       <View style={styles.form}>
@@ -63,6 +66,7 @@ export default function ProfileScreen() {
           onChangeText={setAddress}
         />
       </View>
+      
     </View>
   );
 }

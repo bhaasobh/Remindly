@@ -1,10 +1,11 @@
-// LoginContext.tsx
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
 // Define the types for the context value
 interface LoginContextType {
   isLoginComplete: boolean;
   setIsLoginComplete: (isComplete: boolean) => void;
+  userId: string | null;
+  setUserId: (id: string | null) => void;
 }
 
 // Create the context with a default value
@@ -26,12 +27,13 @@ interface LoginProviderProps {
 
 export const LoginProvider: React.FC<LoginProviderProps> = ({ children }) => {
   const [isLoginComplete, setIsLoginComplete] = useState<boolean>(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   return (
-    <LoginContext.Provider value={{ isLoginComplete, setIsLoginComplete }}>
+    <LoginContext.Provider value={{ isLoginComplete, setIsLoginComplete, userId, setUserId }}>
       {children}
     </LoginContext.Provider>
   );
 };
 
-export default LoginContext
+export default LoginContext;

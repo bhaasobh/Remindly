@@ -1,22 +1,13 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Image, 
-  Alert, 
-  Modal, 
-  ActivityIndicator 
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, Modal, ActivityIndicator } from 'react-native';
 import 'react-native-reanimated';
 import { LoginProvider, useLogin } from '../app/auth/LoginContext';
 import SignupComponent from './SignupComponenet';
 import config from '@/config';
 
 const Login = () => {
-  const { isLoginComplete, setIsLoginComplete } = useLogin();
+  
+  const { setIsLoginComplete ,setUserId ,userId } = useLogin();
   const [modalVisible, setModalVisible] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -26,8 +17,9 @@ const Login = () => {
   const handleCloseModal = () => setModalVisible(false);
 
   const handleLogin = async () => {
-    setIsLoginComplete(true); // Update context state
-    return;
+    // setIsLoginComplete(true);
+    // return
+
     if (!username || !password) {
       Alert.alert('Error', 'Please fill in both username and password.');
       return;
@@ -35,7 +27,7 @@ const Login = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(config.SERVER_API + '/auth/login', {
+      const response = await fetch(config.SERVER_API + '/users/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -46,7 +38,9 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
+        setUserId(data.user._id);
         Alert.alert('Success', 'Login successful!');
+        
         setIsLoginComplete(true); // Update context state
       } else {
         console.log(data);

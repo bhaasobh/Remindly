@@ -59,9 +59,8 @@ const LayoutContent = ({ colorScheme }: { colorScheme: any }) => {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
-        <Stack.Screen name="profile" options={{ title: 'Profile' }} />
-        <Stack.Screen name="+not-found" />
-
+     {/* <Stack.Screen name="profile" options={{ title: 'profile' }} />
+        <Stack.Screen name="+not-found" /> */}
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
