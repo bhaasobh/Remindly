@@ -6,9 +6,10 @@ import MapViewDirections from 'react-native-maps-directions';
 import config from '@/config';
 import PushNotification from './PushNotification'; 
 import React from 'react';
+import { useLogin } from '../app/auth/LoginContext'; 
 
 interface Reminder {
-  id: number;
+  id: string;
   title: string;
   latitude: number;
   longitude: number;
@@ -47,33 +48,44 @@ const MapComponent = ({ reminders: initialReminders }: { reminders: Reminder[] }
     })();     
     fetchReminders();
   }, []);
+  const { userId } = useLogin();
 
   const fetchReminders = useCallback(async () => {
     try {
-      const response = await fetch(config.SERVER_API + '/reminderLocation', {
+      const response = await fetch(config.SERVER_API + '/users/' + userId + '/reminders', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
       const data = await response.json();
-      if (response.ok) {
-        const transformedReminders = data.reminders.map((reminder: any) => ({
-          id: reminder._id,  
-          title: reminder.title,
-          latitude: reminder.address.lat,
-          longitude: reminder.address.lng,
-          address: reminder.address.name || `${reminder.address.lat}, ${reminder.address.lng}`,  
-          text: reminder.Details,
-        }));
-        setReminders(transformedReminders);
-      } else {
-        Alert.alert('Error', data.error || 'Failed to fetch reminders.');
+    if (response.ok) {
+      const locationReminders = data.reminders.locationReminders || [];
+      const transformedReminders = locationReminders.map((reminder: any) => ({
+        id: reminder._id.toString(),  
+        title: reminder.title,
+        name: reminder.address.name,
+        latitude: reminder.address.lat,
+        longitude: reminder.address.lng,
+        address: reminder.address.name || `${reminder.address.lat}, ${reminder.address.lng}`,
+        details: reminder.Details,
+      }));
+
+      setReminders(transformedReminders);
+
+      // Alert if no location reminders are found
+      if (transformedReminders.length === 0) {
+        Alert.alert('No Location Reminders Found', 'You have no location-based reminders at the moment.');
       }
-    } catch (error) {
-      console.error('Error fetching reminders:', error);
+    } else {
+      Alert.alert('Error', data.message || 'Failed to fetch reminders.');
     }
-  }, []);
+  } catch (error) {
+    console.error('Error fetching reminders:', error);
+    Alert.alert('Error', 'An error occurred while fetching reminders.');
+  }
+}, [userId]);
+  
    
 
   useEffect(() => {

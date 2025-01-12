@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React ,{ useState, useEffect,useCallback } from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import { useLogin } from '../app/auth/LoginContext'; 
+import config from '@/config';
 
 interface AddReminderModalProps {
   modalVisible: boolean;
@@ -30,9 +32,10 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
       longitude,
     };
 
-    console.log('Saved reminder:', newReminder); // Log to check if details are saved correctly
+    console.log('Saved reminder:', newReminder); 
     onSaveReminder(newReminder);
     setModalVisible(false);
+    saveReminderToDatabase(newReminder)
   };
 
   const handleAddressSelect = (data: any, details: any) => {
@@ -49,7 +52,55 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
       Alert.alert('Error', 'Unable to fetch address details.');
     }
   };
-
+  const { userId } = useLogin();
+  const saveReminderToDatabase = async (reminder: any) => {
+    try {
+      const url =
+        reminder.reminderType === 'location'
+          ? `${config.SERVER_API}/users/${userId}/location-reminders`
+          : `${config.SERVER_API}/users/${userId}/time-reminders`; 
+  
+      const body =
+        reminder.reminderType === 'location'
+          ? {
+              title: reminder.title,
+              address: {
+                name: reminder.address,
+                lat: reminder.latitude,
+                lng: reminder.longitude,
+              },
+              details: reminder.details,
+            }
+          : {
+              title: reminder.title,
+              address: {
+                name: reminder.address,
+                lat: reminder.latitude,
+                lng: reminder.longitude,
+              },
+              details: reminder.details,
+              time: reminder.time,
+            };
+  
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+  
+      const result = await response.json();
+      if (response.ok) {
+        console.log('Reminder saved successfully:', result);
+      } else {
+        console.error('Failed to save reminder:', result.message || response.statusText);
+      }
+    } catch (error) {
+      console.error('Error saving reminder:', error);
+    }
+  };
+  
   return (
     <Modal
       transparent={true}

@@ -12,13 +12,14 @@ const MAX_HEIGHT = SCREEN_HEIGHT * 0.8;
 const MIN_HEIGHT = 300;
 
 interface Reminder {
-  id: number;
+  id: string;  // Ensure `id` matches `Home.tsx`
   title: string;
   latitude: number;
   longitude: number;
   address: string;
   text: string;
 }
+
 
 
 const Home: React.FC = () => {
@@ -62,7 +63,7 @@ const Home: React.FC = () => {
     }).start();
   };
 
-  const handleReminderClick = (reminderId: number) => {
+  const handleReminderClick = (reminderId: string) => {
     const reminder = reminders.find((reminder) => reminder.id === reminderId);
     if (reminder) {
       setSelectedReminder(reminder);
