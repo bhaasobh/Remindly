@@ -11,7 +11,21 @@ const BOX_HEIGHT = 300;
 const MAX_HEIGHT = SCREEN_HEIGHT * 0.8;
 const MIN_HEIGHT = 300;
 
+interface Reminder {
+  id: string;  // Ensure `id` matches `Home.tsx`
+  title: string;
+  latitude: number;
+  longitude: number;
+  address: string;
+  text: string;
+}
+
+
+
 const Home: React.FC = () => {
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+
+
   const [boxHeight, setBoxHeight] = useState(BOX_HEIGHT);
   const [icon, setIcon] = useState('^');
   const [toggleUp, setToggleUp] = useState(true);
@@ -35,11 +49,6 @@ const Home: React.FC = () => {
     setModalVisible(false); 
   };
 
-  const reminders = [
-    { id: 1, name: 'Grocery Store', latitude: 32.080880, longitude: 34.780570, address: '123 Market St', text: 'test test 123 yooooo' },
-    { id: 2, name: 'Pharmacy', latitude: 32.082880, longitude: 34.781570, address: '456 Health Ave', text: 'test test 456 yooooo' },
-    { id: 3, name: 'Library', latitude: 32.085880, longitude: 34.784570, address: '789 Knowledge Rd', text: 'test test 789 yooooo' },
-  ];
 
   const toggleHeight = () => {
     setToggleUp(!toggleUp);
@@ -54,7 +63,7 @@ const Home: React.FC = () => {
     }).start();
   };
 
-  const handleReminderClick = (reminderId: number) => {
+  const handleReminderClick = (reminderId: string) => {
     const reminder = reminders.find((reminder) => reminder.id === reminderId);
     if (reminder) {
       setSelectedReminder(reminder);
@@ -65,7 +74,7 @@ const Home: React.FC = () => {
     return reminders.map((reminder) => (
       <TouchableOpacity key={reminder.id} onPress={() => handleReminderClick(reminder.id)}>
         <View style={styles.boxesContainer}>
-          <Text style={styles.boxText}>{reminder.name}</Text>
+          <Text style={styles.boxText}>{reminder.title}</Text>
         </View>
       </TouchableOpacity>
     ));
