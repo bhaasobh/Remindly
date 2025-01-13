@@ -22,6 +22,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
 
   const handleSave = () => {
     const newReminder = {
+      id: Date.now().toString(), 
       title,
       reminderType,
       address,
@@ -93,6 +94,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
       const result = await response.json();
       if (response.ok) {
         console.log('Reminder saved successfully:', result);
+        Alert.alert('Add reminder sucssefuly !!');
       } else {
         console.error('Failed to save reminder:', result.message || response.statusText);
       }
