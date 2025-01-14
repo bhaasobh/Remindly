@@ -65,8 +65,8 @@ const MapComponent = ({ reminders: initialReminders }: { reminders: Reminder[] }
         id: reminder._id.toString(),  
         title: reminder.title,
         name: reminder.address.name,
-        latitude: reminder.address.lat,
-        longitude: reminder.address.lng,
+        latitude: parseFloat(reminder.address.lat),  // Ensure latitude is a number
+        longitude: parseFloat(reminder.address.lng), 
         address: reminder.address.name || `${reminder.address.lat}, ${reminder.address.lng}`,
         details: reminder.Details,
       }));
@@ -134,9 +134,11 @@ const MapComponent = ({ reminders: initialReminders }: { reminders: Reminder[] }
   }, [userLocation, reminders]);
 
   const handleMarkerPress = (latitude: number, longitude: number) => {
-    setDestination({ latitude, longitude });
+    if (!isNaN(latitude) && !isNaN(longitude)) {
+      setDestination({ latitude, longitude });
+    }
   };
-
+  
   return (
     <View style={styles.MapContainer}>
       <MapView style={styles.map} region={mapRegion}>
@@ -150,23 +152,28 @@ const MapComponent = ({ reminders: initialReminders }: { reminders: Reminder[] }
             title="Your Location"
           />
         )}
-        {reminders.map((reminder) => (
-  <React.Fragment key={reminder.id}>
-    <Marker
-      coordinate={{ latitude: reminder.latitude, longitude: reminder.longitude }}
-      pinColor="blue"
-      title={reminder.title}
-      onPress={() => handleMarkerPress(reminder.latitude, reminder.longitude)}
-    />
-    <Circle
-      center={{ latitude: reminder.latitude, longitude: reminder.longitude }}
-      radius={200}
-      strokeWidth={2}
-      strokeColor="rgba(76, 76, 251, 0.5)"
-      fillColor="rgba(101, 165, 255, 0.2)"
-    />
-  </React.Fragment>
-))}
+      {reminders.map((reminder) => {
+  if (!isNaN(reminder.latitude) && !isNaN(reminder.longitude)) {
+    return (
+      <React.Fragment key={reminder.id}>
+        <Marker
+          coordinate={{ latitude: reminder.latitude, longitude: reminder.longitude }}
+          pinColor="blue"
+          title={reminder.title}
+          onPress={() => handleMarkerPress(reminder.latitude, reminder.longitude)}
+        />
+        <Circle
+          center={{ latitude: reminder.latitude, longitude: reminder.longitude }}
+          radius={200}
+          strokeWidth={2}
+          strokeColor="rgba(76, 76, 251, 0.5)"
+          fillColor="rgba(101, 165, 255, 0.2)"
+        />
+      </React.Fragment>
+    );
+  }
+  return null;
+})}
 
         {destination && userLocation && (
           <MapViewDirections
