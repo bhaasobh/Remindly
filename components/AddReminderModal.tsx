@@ -1,6 +1,7 @@
-import React ,{ useState, useEffect,useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import DateTimePicker from '@react-native-community/datetimepicker'; // Import date picker
 import { useLogin } from '../app/auth/LoginContext'; 
 import config from '@/config';
 
@@ -15,28 +16,36 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
   const [title, setTitle] = useState('');
   const [address, setAddress] = useState('');
   const [radius, setRadius] = useState('200.00');
-  const [time, setTime] = useState('');
+  const [Time, setTime] = useState(''); // Time input
+  const [date, setDate] = useState(new Date()); // Date picker state
   const [details, setDetails] = useState('');
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const handleSave = () => {
+    // Combine the date and time into a single Date object
+    const timeArray = Time.split(':'); // Split time into hours and minutes
+    const updatedDate = new Date(date); // Get the selected date
+    updatedDate.setHours(parseInt(timeArray[0])); // Set the hours from the time input
+    updatedDate.setMinutes(parseInt(timeArray[1])); // Set the minutes from the time input
+
     const newReminder = {
-      id: Date.now().toString(), 
+      id: Date.now().toString(),
       title,
       reminderType,
       address,
       radius,
-      time,
+      Time: updatedDate.toISOString(), // Store combined date and time in ISO format
       details,
       latitude,
       longitude,
     };
 
-    console.log('Saved reminder:', newReminder); 
+    console.log('Saved reminder:', newReminder);
     onSaveReminder(newReminder);
     setModalVisible(false);
-    saveReminderToDatabase(newReminder)
+    saveReminderToDatabase(newReminder);
   };
 
   const handleAddressSelect = (data: any, details: any) => {
@@ -53,36 +62,35 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
       Alert.alert('Error', 'Unable to fetch address details.');
     }
   };
+
   const { userId } = useLogin();
+
   const saveReminderToDatabase = async (reminder: any) => {
     try {
       const url =
         reminder.reminderType === 'location'
           ? `${config.SERVER_API}/users/${userId}/location-reminders`
           : `${config.SERVER_API}/users/${userId}/time-reminders`; 
-  
-      const body =
-        reminder.reminderType === 'location'
-          ? {
-              title: reminder.title,
-              address: {
-                name: reminder.address,
-                lat: reminder.latitude,
-                lng: reminder.longitude,
-              },
-              details: reminder.details,
-            }
-          : {
-              title: reminder.title,
-              address: {
-                name: reminder.address,
-                lat: reminder.latitude,
-                lng: reminder.longitude,
-              },
-              details: reminder.details,
-              time: reminder.time,
-            };
-  
+
+      
+          const body =
+          reminder.reminderType === 'location'
+            ? {
+                title: reminder.title,
+                address: {
+                  name: reminder.address,
+                  lat: reminder.latitude,
+                  lng: reminder.longitude,
+                },
+                details: reminder.details,
+              }
+            : {
+                title: reminder.title,
+                details: reminder.details,
+                Time: reminder.Time,
+              };
+    
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -90,11 +98,11 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
         },
         body: JSON.stringify(body),
       });
-  
+
       const result = await response.json();
       if (response.ok) {
         console.log('Reminder saved successfully:', result);
-        Alert.alert('Add reminder sucssefuly !!');
+        Alert.alert('Add reminder successfully!');
       } else {
         console.error('Failed to save reminder:', result.message || response.statusText);
       }
@@ -102,7 +110,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
       console.error('Error saving reminder:', error);
     }
   };
-  
+
   return (
     <Modal
       transparent={true}
@@ -151,7 +159,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
                 }}
               />
               <Text>Time:</Text>
-              <TextInput style={styles.input} value={time} onChangeText={setTime} />
+              <TextInput style={styles.input} value={Time} onChangeText={setTime} />
               <Text>Reminder details:</Text>
               <TextInput style={[styles.input, styles.largeInput]} value={details} onChangeText={setDetails} multiline />
             </>
@@ -159,8 +167,25 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
 
           {reminderType === 'time' && (
             <>
+              <Text>Date:</Text>
+              <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+                <Text style={styles.input}>{date.toDateString()}</Text>
+              </TouchableOpacity>
+
+              {showDatePicker && (
+                <DateTimePicker
+                  value={date}
+                  mode="date"
+                  display="calendar"
+                  onChange={(event, selectedDate) => {
+                    setShowDatePicker(false);
+                    setDate(selectedDate || date);
+                  }}
+                />
+              )}
+
               <Text>Time:</Text>
-              <TextInput style={styles.input} value={time} onChangeText={setTime} />
+              <TextInput style={styles.input} value={Time} onChangeText={setTime} />
               <Text>Reminder details:</Text>
               <TextInput style={[styles.input, styles.largeInputForTime]} value={details} onChangeText={setDetails} multiline />
             </>

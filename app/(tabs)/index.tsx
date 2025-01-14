@@ -5,6 +5,7 @@ import MapComponent from '@/components/MapComponent';
 import Header from '../../components/Header';
 import AddReminderModal from '@/components/AddReminderModal'; 
 import ReminderDetails from '@/components/ReminderDetails';
+import RemindersList from '@/components/RemindersList'; // New component for displaying reminders
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const BOX_HEIGHT = 300;
@@ -31,6 +32,7 @@ const Home: React.FC = () => {
   const heightAnim = useRef(new Animated.Value(BOX_HEIGHT)).current;
   const [isModalVisible, setModalVisible] = useState(false);
   const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [filterType, setFilterType] = useState<'all' | 'location' | 'time'>('all');
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -51,23 +53,6 @@ const Home: React.FC = () => {
       duration: 300,
       useNativeDriver: false,
     }).start();
-  };
-
-  const handleReminderClick = (reminderId: string) => {
-    const reminder = locationReminders.find((reminder) => reminder.id === reminderId);
-    if (reminder) {
-      setSelectedReminder(reminder);
-    }
-  };
-
-  const renderBoxes = () => {
-    return locationReminders.map((reminder) => (
-      <TouchableOpacity key={reminder.id} onPress={() => handleReminderClick(reminder.id)}>
-        <View style={styles.boxesContainer}>
-          <Text style={styles.boxText}>{reminder.title}</Text>
-        </View>
-      </TouchableOpacity>
-    ));
   };
 
   return (
@@ -93,7 +78,9 @@ const Home: React.FC = () => {
             />
           </TouchableOpacity>
         </View>
-        <ScrollView>{renderBoxes()}</ScrollView>
+        <ScrollView>
+          <RemindersList/>
+        </ScrollView>
       </Animated.View>
       <AddReminderModal
         modalVisible={isModalVisible}
@@ -165,7 +152,8 @@ const styles = StyleSheet.create({
     color: '#DF6316',
     marginRight: 'auto',
     paddingBottom:15,
-
+    position:'relative',
+    marginBottom:22,
   },
   SlidBoxTitleContainer: {
     justifyContent: 'space-between',
@@ -176,7 +164,9 @@ const styles = StyleSheet.create({
   },
   AddIconPlace: {
     borderRadius: 2.5,
-    
+    left:-10,
+    top:-8,
+    position:'relative',
   },
   modalOverlay: {
     flex: 1,
