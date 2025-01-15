@@ -4,10 +4,10 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 type Reminder = {
   id: string;
   title: string;
-  text: string;
+  details: string;
   address: string;
   reminderType: 'location' | 'time';
-  reminderTime?: string;
+  Time: string;
 };
 
 type ReminderDetailsProps = {
@@ -20,14 +20,31 @@ const ReminderDetails: React.FC<ReminderDetailsProps> = ({ reminder, onClose }) 
   if (!reminder) {
     return null; // Or you can return a message like "No reminder selected"
   }
+  
+  const parsedDate = reminder.Time ? new Date(reminder.Time) : null;
+  const formattedTime = parsedDate && !isNaN(parsedDate.getTime())
+    ? `${parsedDate.toLocaleDateString()} ${parsedDate.toLocaleTimeString()}`
+    : 'No time specified';
 
   return (
     <View style={styles.modalOverlay}>
       <View style={styles.modalContent}>
         <Text style={styles.modalTitle}>Reminder Details</Text>
-        <Text>Name: {reminder.title}</Text>
-        <Text>Address: {reminder.address}</Text>
-        <Text>Details: {reminder.text}</Text>
+        <Text style={styles.InfoTitle}>Name: {reminder.title}</Text>
+        {reminder.reminderType === 'location' && (
+          <>
+            <Text style={styles.InfoTitle}>Address:</Text>
+            <Text>{reminder.address}</Text>
+          </>
+        )}
+        {reminder.reminderType === 'time' && (
+          <>
+            <Text style={styles.InfoTitle}>Time:</Text>
+            <Text>{formattedTime}</Text>
+          </>
+        )}
+        <Text  style={styles.InfoTitle}>Details:</Text>
+        <Text> {reminder.details}</Text>
         <TouchableOpacity onPress={onClose}>
           <Text style={styles.closeButton}>Close</Text>
         </TouchableOpacity>
@@ -41,27 +58,32 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
     backgroundColor: '#fff',
     padding: 20,
     borderRadius: 10,
     width: 300,
-    height: 200,
+    height: 280,
     justifyContent: 'center',
-    alignItems: 'center',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
     color: '#DF6316',
+    left: 53,
+    top: -14,
   },
   closeButton: {
     marginTop: 20,
     color: '#DF6316',
     fontSize: 16,
+    fontWeight: 'bold',
+    left: 105,
+    top: 10,
+  },
+  InfoTitle: {
     fontWeight: 'bold',
   },
 });

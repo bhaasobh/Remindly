@@ -36,7 +36,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
       reminderType,
       address,
       radius,
-      Time: updatedDate.toISOString(), // Store combined date and time in ISO format
+      Time: reminderType === 'time' ? updatedDate.toISOString() : '', // Store combined date and time for time-based reminder
       details,
       latitude,
       longitude,
@@ -158,8 +158,6 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
                   textInput: styles.input,
                 }}
               />
-              <Text>Time:</Text>
-              <TextInput style={styles.input} value={Time} onChangeText={setTime} />
               <Text>Reminder details:</Text>
               <TextInput style={[styles.input, styles.largeInput]} value={details} onChangeText={setDetails} multiline />
             </>

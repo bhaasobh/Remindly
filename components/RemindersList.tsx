@@ -8,10 +8,10 @@ import config from '@/config';
 type Reminder = {
   id: string;
   title: string;
-  text: string;
+  details: string;
   address: string;
   reminderType: 'location' | 'time';
-  reminderTime?: string;
+  Time: string;
 };
 
 const RemindersList: React.FC = () => {
@@ -39,15 +39,15 @@ const RemindersList: React.FC = () => {
           title: reminder.title,
           address: reminder.address.name || `${reminder.address.lat}, ${reminder.address.lng}`,
           reminderType: 'location',
-          text: reminder.text,
+          details: reminder.details || reminder.Details,  // Normalize in transformation
         }));
 
         const transformedTimeReminders = (timeReminders || []).map((reminder: any) => ({
           id: reminder._id?.toString() || '',
           title: reminder.title,
-          reminderTime: reminder.reminderTime || 'No time set',
+          Time: new Date(reminder.Time).toISOString(),  // Format Time to ISO string
           reminderType: 'time',
-          text: reminder.text,
+          details: reminder.details || reminder.Details,  // Normalize in transformation
         }));
 
         setReminders([...transformedLocationReminders, ...transformedTimeReminders]);
