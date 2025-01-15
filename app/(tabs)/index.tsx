@@ -4,8 +4,8 @@ import Entypo from '@expo/vector-icons/Entypo';
 import MapComponent from '@/components/MapComponent';
 import Header from '../../components/Header';
 import AddReminderModal from '@/components/AddReminderModal'; 
-import ReminderDetails from '@/components/ReminderDetails';
-import RemindersList from '@/components/RemindersList'; // New component for displaying reminders
+import TimeReminderComponent from '@/components/TimeReminderComponent'; // Import the TimeReminderComponent
+import RemindersList from '@/components/RemindersList'; 
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const BOX_HEIGHT = 300;
@@ -89,12 +89,10 @@ const Home: React.FC = () => {
       />
       {selectedReminder && (
         <Modal visible={true} animationType="slide" transparent={true}>
-          <ReminderDetails
-            reminder={selectedReminder}
-            onClose={() => setSelectedReminder(null)}
-          />
         </Modal>
       )}
+      <TimeReminderComponent/>
+
     </View>
   );
 };
