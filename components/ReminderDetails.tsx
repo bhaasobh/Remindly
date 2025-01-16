@@ -1,22 +1,31 @@
-// ReminderDetails.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
+type Reminder = {
+  id: string;
+  title: string;
+  text: string;
+  address: string;
+  reminderType: 'location' | 'time';
+  reminderTime?: string;
+};
+
 type ReminderDetailsProps = {
-  reminder: {
-    name: string;
-    address: string;
-    text: string;
-  };
+  reminder: Reminder | null;
   onClose: () => void;
 };
 
 const ReminderDetails: React.FC<ReminderDetailsProps> = ({ reminder, onClose }) => {
+  // If reminder is null, return nothing or a fallback UI
+  if (!reminder) {
+    return null; // Or you can return a message like "No reminder selected"
+  }
+
   return (
     <View style={styles.modalOverlay}>
       <View style={styles.modalContent}>
         <Text style={styles.modalTitle}>Reminder Details</Text>
-        <Text>Name: {reminder.name}</Text>
+        <Text>Name: {reminder.title}</Text>
         <Text>Address: {reminder.address}</Text>
         <Text>Details: {reminder.text}</Text>
         <TouchableOpacity onPress={onClose}>
