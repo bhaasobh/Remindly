@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useLogin } from '../app/auth/LoginContext';
-import ReminderDetails from './ReminderDetails';  // Import the ReminderDetails component
+import ShowReminder from './ShowReminder'; 
 import config from '@/config';
 
 type Reminder = {
@@ -39,15 +39,15 @@ const RemindersList: React.FC = () => {
           title: reminder.title,
           address: reminder.address.name || `${reminder.address.lat}, ${reminder.address.lng}`,
           reminderType: 'location',
-          details: reminder.details || reminder.Details,  // Normalize in transformation
+          details: reminder.details || reminder.Details,
         }));
 
         const transformedTimeReminders = (timeReminders || []).map((reminder: any) => ({
           id: reminder._id?.toString() || '',
           title: reminder.title,
-          Time: new Date(reminder.Time).toISOString(),  // Format Time to ISO string
+          Time: new Date(reminder.Time).toISOString(),
           reminderType: 'time',
-          details: reminder.details || reminder.Details,  // Normalize in transformation
+          details: reminder.details || reminder.Details,
         }));
 
         setReminders([...transformedLocationReminders, ...transformedTimeReminders]);
@@ -63,10 +63,18 @@ const RemindersList: React.FC = () => {
       Alert.alert('Error', 'An error occurred while fetching reminders.');
     }
   }, [userId]);
-
-  useEffect(() => {
-    fetchReminders();
-  }, [fetchReminders]);
+ 
+ 
+   useEffect(() => {
+     fetchReminders();
+ 
+     const interval = setInterval(() => {
+       fetchReminders(); 
+     }, 5000); 
+ 
+     return () => clearInterval(interval);
+   }, [fetchReminders]);
+ 
 
   const filteredReminders = reminders.filter(
     (reminder) => filterType === 'all' || reminder.reminderType === filterType
@@ -75,32 +83,38 @@ const RemindersList: React.FC = () => {
   const handleReminderClick = (reminderId: string) => {
     const selectedReminder = reminders.find((reminder) => reminder.id === reminderId);
     if (selectedReminder) {
-      setSelectedReminder(selectedReminder); // Set the selected reminder to show in the modal
+      setSelectedReminder(selectedReminder); 
     }
   };
 
   const handleCloseModal = () => {
-    setSelectedReminder(null);  // Close the modal
+    setSelectedReminder(null);
   };
 
   const handleFilterSelect = (type: 'all' | 'location' | 'time') => {
     setFilterType(type);
-    setShowFilter(false);  // Close the filter box after selecting an option
+    setShowFilter(false);  
+  };
+
+  const handleSaveUpdatedReminder = (updatedReminder: Reminder) => {
+    setReminders((prevReminders) =>
+      prevReminders.map((reminder) =>
+        reminder.id === updatedReminder.id ? updatedReminder : reminder
+      )
+    );
+    setSelectedReminder(null); 
   };
 
   return (
     <View style={styles.container}>
-      {/* Filter Button (Positioned Outside the Container) */}
       <TouchableOpacity onPress={() => setShowFilter(!showFilter)} style={styles.filterIcon}>
         <FontAwesome name="filter" size={24} color='#333' />
       </TouchableOpacity>
 
-      {/* Active Filter Text */}
       <Text style={styles.activeFilterText}>
         Active Filter: {filterType.charAt(0).toUpperCase() + filterType.slice(1)}
       </Text>
 
-      {/* Filter Options (Always visible or toggled) */}
       {showFilter && (
         <View style={styles.filterBox}>
           <TouchableOpacity onPress={() => handleFilterSelect('all')}>
@@ -115,7 +129,6 @@ const RemindersList: React.FC = () => {
         </View>
       )}
 
-      {/* Reminder List */}
       <ScrollView style={styles.reminderList}>
         {filteredReminders.map((reminder) => (
           <TouchableOpacity key={reminder.id} onPress={() => handleReminderClick(reminder.id)}>
@@ -124,7 +137,6 @@ const RemindersList: React.FC = () => {
         ))}
       </ScrollView>
 
-      {/* Modal for Reminder Details */}
       <Modal
         visible={!!selectedReminder}
         animationType="slide"
@@ -132,7 +144,15 @@ const RemindersList: React.FC = () => {
         onRequestClose={handleCloseModal}
       >
         <View style={styles.modalOverlay}>
-          <ReminderDetails reminder={selectedReminder} onClose={handleCloseModal} />
+          <ShowReminder
+            reminder={selectedReminder}
+            onClose={handleCloseModal}
+            onSave={handleSaveUpdatedReminder}
+            onDelete={(id) => {
+              setReminders(reminders.filter((reminder) => reminder.id !== id)); 
+              handleCloseModal();
+            }}
+          />
         </View>
       </Modal>
     </View>
@@ -142,11 +162,20 @@ const RemindersList: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 15,
-    paddingTop: 30,
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  reminderList: {
+    marginTop: 10,
+  },
+  reminderItem: {
+    fontSize: 18,
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
   },
   filterIcon: {
-    position: 'absolute', // Fixed position outside the reminder list container
+    position: 'absolute', 
     top: 0, 
     left: 10,
     backgroundColor: '#eee',
@@ -156,13 +185,13 @@ const styles = StyleSheet.create({
   },
   activeFilterText: {
     fontSize: 18,
-    marginTop: -27,
+    marginTop: -18,
     color: '#333',
     fontWeight: 'bold',
     left: 30,
   },
   filterBox: {
-    position: 'absolute',  // Position filter box near the filter icon
+    position: 'absolute',  
     left: 35,
     backgroundColor: '#fff',
     borderRadius: 5,
@@ -174,26 +203,17 @@ const styles = StyleSheet.create({
   },
   filterText: {
     fontSize: 16,
-    color: '#555',
+    paddingVertical: 5,
   },
   activeFilter: {
-    color: '#DF6316',
     fontWeight: 'bold',
-  },
-  reminderList: {
-    marginTop: 10, 
-  },
-  reminderItem: {
-    padding: 10,
-    fontSize: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    color: '#DF6316',
   },
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Dark overlay for the modal
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
 });
 
