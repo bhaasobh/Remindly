@@ -1,14 +1,16 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
-type Reminder = {
+interface Reminder {
   id: string;
   title: string;
-  text: string;
-  address: string;
-  reminderType: 'location' | 'time';
-  reminderTime?: string;
-};
+  address: {
+    name: string;
+    lat: number;
+    lng: number;
+  };
+  details: string;
+}
 
 type ReminderDetailsProps = {
   reminder: Reminder | null;
@@ -26,8 +28,8 @@ const ReminderDetails: React.FC<ReminderDetailsProps> = ({ reminder, onClose }) 
       <View style={styles.modalContent}>
         <Text style={styles.modalTitle}>Reminder Details</Text>
         <Text>Name: {reminder.title}</Text>
-        <Text>Address: {reminder.address}</Text>
-        <Text>Details: {reminder.text}</Text>
+        <Text>Address: {reminder.address.name}</Text>
+        <Text>Details: {reminder.title}</Text>
         <TouchableOpacity onPress={onClose}>
           <Text style={styles.closeButton}>Close</Text>
         </TouchableOpacity>

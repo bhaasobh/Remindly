@@ -6,6 +6,7 @@ import Header from '../../components/Header';
 import AddReminderModal from '@/components/AddReminderModal'; 
 import ReminderDetails from '@/components/ReminderDetails';
 import RemindersList from '@/components/RemindersList'; // New component for displaying reminders
+import { useLogin } from '@/app/auth/LoginContext';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const BOX_HEIGHT = 300;
@@ -13,35 +14,42 @@ const MAX_HEIGHT = SCREEN_HEIGHT * 0.8;
 const MIN_HEIGHT = 300;
 
 interface Reminder {
-  name: string;  
   id: string;
   title: string;
-  latitude: number;
-  longitude: number;
-  address: string;
-  text: string;
-  reminderType: 'location' | 'time'; 
-
+  address: {
+    name: string;
+    lat: number;
+    lng: number;
+  };
+  details: string;
 }
 
 const Home: React.FC = () => {
-  const [locationReminders, setLocationReminders] = useState<Reminder[]>([]);
+  const { reminders, setReminders,reminder } = useLogin();
   const [boxHeight, setBoxHeight] = useState(BOX_HEIGHT);
   const [toggleUp, setToggleUp] = useState(true);
   const [selectedReminder, setSelectedReminder] = useState<Reminder | null>(null);
   const heightAnim = useRef(new Animated.Value(BOX_HEIGHT)).current;
   const [isModalVisible, setModalVisible] = useState(false);
-  const [reminders, setReminders] = useState<Reminder[]>([]);
+  //const [reminders, setReminders] = useState<Reminder[]>([]);
   const [filterType, setFilterType] = useState<'all' | 'location' | 'time'>('all');
-
+  const handleSaveReminder = (newReminder: any) => {
+    // Update the local reminders list
+    console.log('add new reminder from index ',newReminder);
+    setReminders([...reminders, newReminder]);
+  };
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
   };
 
-  const saveReminder = (reminder: Reminder) => {
-    setLocationReminders([...locationReminders, reminder]);
+
+  const saveReminder = (newReminder: any) => {
+    setReminders([...reminders, newReminder]);
+    //console.log("remiders are "+reminders[1].title); // Append the new reminder to the list
     setModalVisible(false);
   };
+
+
 
   const toggleHeight = () => {
     const newHeight = toggleUp ? Math.min(boxHeight + 500, MAX_HEIGHT) : Math.max(boxHeight - 500, MIN_HEIGHT);
@@ -58,7 +66,7 @@ const Home: React.FC = () => {
   return (
     <View style={styles.container}>
       <Header />
-      <MapComponent reminders={locationReminders} />
+      <MapComponent />
       <Animated.View style={[styles.slideUpBox, { height: heightAnim }]}>
         <View style={styles.handle}>
           <TouchableOpacity onPress={toggleHeight}>
@@ -85,7 +93,7 @@ const Home: React.FC = () => {
       <AddReminderModal
         modalVisible={isModalVisible}
         setModalVisible={setModalVisible}
-        onSaveReminder={saveReminder}
+        onSaveReminder={handleSaveReminder}
       />
       {selectedReminder && (
         <Modal visible={true} animationType="slide" transparent={true}>
