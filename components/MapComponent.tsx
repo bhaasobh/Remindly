@@ -14,7 +14,7 @@ interface Reminder {
   latitude: number;
   longitude: number;
   address: string;
-  text: string;
+  details: string;
 }
 
 const MapComponent = ({ reminders: initialReminders }: { reminders: Reminder[] }) => {
@@ -68,15 +68,11 @@ const MapComponent = ({ reminders: initialReminders }: { reminders: Reminder[] }
         latitude: parseFloat(reminder.address.lat),  // Ensure latitude is a number
         longitude: parseFloat(reminder.address.lng), 
         address: reminder.address.name || `${reminder.address.lat}, ${reminder.address.lng}`,
-        details: reminder.Details,
+        details: reminder.details,
       }));
 
       setReminders(transformedReminders);
 
-      // Alert if no location reminders are found
-      if (transformedReminders.length === 0) {
-        Alert.alert('No Location Reminders Found', 'You have no location-based reminders at the moment.');
-      }
     } else {
       Alert.alert('Error', data.message || 'Failed to fetch reminders.');
     }
@@ -126,9 +122,7 @@ const MapComponent = ({ reminders: initialReminders }: { reminders: Reminder[] }
   useEffect(() => {
     reminders.forEach((reminder) => {
       if (isWithinRadius(reminder.latitude, reminder.longitude)) {
-        Alert.alert('Reminder', `You are near ${reminder.title}`);
-        <PushNotification  title="Reminder"  message={`You are near ${reminder.text}`}  />;
-     
+        Alert.alert('Reminder', `You are ner the reminder ${reminder.title}\nremember to ${reminder.details}`);     
       }
     });
   }, [userLocation, reminders]);

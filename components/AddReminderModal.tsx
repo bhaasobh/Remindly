@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-import DateTimePicker from '@react-native-community/datetimepicker'; // Import date picker
+import DateTimePicker from '@react-native-community/datetimepicker'; 
 import { useLogin } from '../app/auth/LoginContext'; 
 import config from '@/config';
 
@@ -16,19 +16,18 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
   const [title, setTitle] = useState('');
   const [address, setAddress] = useState('');
   const [radius, setRadius] = useState('200.00');
-  const [Time, setTime] = useState(''); // Time input
-  const [date, setDate] = useState(new Date()); // Date picker state
+  const [Time, setTime] = useState(''); 
+  const [date, setDate] = useState(new Date()); 
   const [details, setDetails] = useState('');
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const handleSave = () => {
-    // Combine the date and time into a single Date object
-    const timeArray = Time.split(':'); // Split time into hours and minutes
-    const updatedDate = new Date(date); // Get the selected date
-    updatedDate.setHours(parseInt(timeArray[0])); // Set the hours from the time input
-    updatedDate.setMinutes(parseInt(timeArray[1])); // Set the minutes from the time input
+    const timeArray = Time.split(':'); 
+    const updatedDate = new Date(date); 
+    updatedDate.setHours(parseInt(timeArray[0])); 
+    updatedDate.setMinutes(parseInt(timeArray[1])); 
 
     const newReminder = {
       id: Date.now().toString(),
@@ -36,7 +35,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
       reminderType,
       address,
       radius,
-      Time: updatedDate.toISOString(), // Store combined date and time in ISO format
+      Time: reminderType === 'time' ? updatedDate.toISOString() : '', 
       details,
       latitude,
       longitude,
@@ -158,8 +157,6 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
                   textInput: styles.input,
                 }}
               />
-              <Text>Time:</Text>
-              <TextInput style={styles.input} value={Time} onChangeText={setTime} />
               <Text>Reminder details:</Text>
               <TextInput style={[styles.input, styles.largeInput]} value={details} onChangeText={setDetails} multiline />
             </>
@@ -223,16 +220,16 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: '#DF6316',
     position: 'absolute',
-    top: -66,
+    top: -56,
     left: 295,
   },
   modalTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 5,
     color: '#DF6316',
     position: 'absolute',
-    top: 20,
+    top: 25,
     left: 50,
   },
   saveButton: {
@@ -243,7 +240,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     position: 'absolute',
     top: 505,
-    left: 100,
+    left: 105,
   },
   saveButtonText: {
     color: '#fff',
@@ -259,10 +256,10 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   largeInput: {
-    height: 146,
+    height: 201.5,
   },
   largeInputForTime: {
-    height: 221.5,
+    height: 135.5,
   },
   radioGroup: {
     flexDirection: 'row',
