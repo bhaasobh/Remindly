@@ -15,7 +15,7 @@ type Reminder = {
 };
 
 const RemindersList: React.FC = () => {
-  const { userId } = useLogin();
+  const { userId ,refreshReminders } = useLogin();
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [filterType, setFilterType] = useState<'all' | 'location' | 'time'>('all');
   const [showFilter, setShowFilter] = useState(false);
@@ -52,9 +52,9 @@ const RemindersList: React.FC = () => {
 
         setReminders([...transformedLocationReminders, ...transformedTimeReminders]);
 
-        if (transformedLocationReminders.length === 0 && transformedTimeReminders.length === 0) {
-          Alert.alert('No Reminders Found', 'You have no reminders at the moment.');
-        }
+        // if (transformedLocationReminders.length === 0 && transformedTimeReminders.length === 0) {
+        //   Alert.alert('No Reminders Found', 'You have no reminders at the moment.');
+        // }
       } else {
         Alert.alert('Error', data.message || 'Failed to fetch reminders.');
       }
@@ -70,6 +70,7 @@ const RemindersList: React.FC = () => {
  
      const interval = setInterval(() => {
        fetchReminders(); 
+       
      }, 5000); 
  
      return () => clearInterval(interval);

@@ -4,6 +4,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import ReminderDetails from './ReminderDetails'; 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import config from '@/config';
+import { useLogin } from '@/app/auth/LoginContext';
 
 type Reminder = {
   id: string;
@@ -23,6 +24,8 @@ type ShowReminderProps = {
 
 const ShowReminder: React.FC<ShowReminderProps> = ({ reminder, onClose, onDelete, onSave }) => {
   const [isEditing, setIsEditing] = useState(false); 
+   const { userId ,refreshReminders} = useLogin(); 
+
 
   if (!reminder) {
     return null;
@@ -54,6 +57,7 @@ const ShowReminder: React.FC<ShowReminderProps> = ({ reminder, onClose, onDelete
       if (response.ok) {
         Alert.alert('Success','Reminder deleted successfully');
         onDelete(id);
+        refreshReminders();
       } else {
         console.error('Failed to delete reminder');
       }
