@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import config from '@/config';
+import React, { useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert } from "react-native";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import config from "@/config";
 
-type Reminder = {
+interface Reminder {
   id: string;
   title: string;
   details: string;
-  address: string;
-  reminderType: 'location' | 'time';
-  Time: string;
-};
+  address: string | { name: string; lat: number; lng: number };
+  reminderType: "location" | "time";
+  Time?: string;
+}
 
 type ReminderDetailsProps = {
   reminder: Reminder | null;
@@ -33,76 +33,78 @@ const ReminderDetails: React.FC<ReminderDetailsProps> = ({ reminder, onClose, on
     if (editableReminder) {
       try {
         const url =
-          editableReminder.reminderType === 'location'
+          editableReminder.reminderType === "location"
             ? `${config.SERVER_API}/location-reminders/${editableReminder.id}`
             : `${config.SERVER_API}/time-reminders/${editableReminder.id}`;
 
-        const dataToSave = {
-          ...editableReminder,
-          details: editableReminder.reminderType === 'location' ? editableReminder.details : undefined,
-          Details: editableReminder.reminderType === 'time' ? editableReminder.details : undefined,
-        };
-
         const response = await fetch(url, {
-          method: 'PUT',
+          method: "PUT",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify(dataToSave),
+          body: JSON.stringify(editableReminder),
         });
 
         const data = await response.json();
 
         if (response.ok) {
-          onSave(editableReminder); 
-          Alert.alert('Success', 'Reminder updated successfully.');
+          onSave(editableReminder);
+          Alert.alert("Success", "Reminder updated successfully.");
         } else {
-          Alert.alert('Error', data.message || 'Failed to update reminder.');
+          Alert.alert("Error", data.message || "Failed to update reminder.");
         }
       } catch (error) {
-        console.error('Error updating reminder:', error);
-        Alert.alert('Error', 'An error occurred while updating reminder.');
+        console.error("Error updating reminder:", error);
+        Alert.alert("Error", "An error occurred while updating the reminder.");
       }
     }
   };
 
   const parsedDate = editableReminder.Time ? new Date(editableReminder.Time) : null;
-  const formattedTime = parsedDate && !isNaN(parsedDate.getTime())
-    ? parsedDate.toLocaleString()
-    : 'No time specified';
+  const formattedTime =
+    parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate.toLocaleString() : "No time specified";
 
   return (
     <View style={styles.modalOverlay}>
       <View style={styles.modalContent}>
         <Text style={styles.modalTitle}>Reminder Details</Text>
 
-        <Text style={styles.InfoTitle}>Name:</Text>
+        <Text style={styles.InfoTitle}>Title:</Text>
         <TextInput
           style={styles.input}
           value={editableReminder.title}
-          onChangeText={(text) => handleEditChange('title', text)}
+          onChangeText={(text) => handleEditChange("title", text)}
         />
 
-        {editableReminder.reminderType === 'location' && (
+        {editableReminder.reminderType === "location" && (
           <>
             <Text style={styles.InfoTitle}>Address:</Text>
-            <Text style={styles.InfoTitle}>current address:</Text>
-            <Text>{editableReminder.address}</Text>
-            <Text style={styles.InfoTitle}>the new address:</Text>
-            <TextInput
-              style={styles.input}
-              onChangeText={(text) => handleEditChange('address', text)}
-            />
+            {typeof editableReminder.address === "string" ? (
+              <Text>{editableReminder.address}</Text>
+            ) : (
+              <>
+                <Text>{editableReminder.address.name}</Text>
+                <TextInput
+                  style={styles.input}
+                  onChangeText={(text) =>
+                    handleEditChange("address", {
+                      ...(editableReminder.address as any),
+                      name: text,
+                    })
+                  }
+                />
+              </>
+            )}
           </>
         )}
 
-        {editableReminder.reminderType === 'time' && (
+        {editableReminder.reminderType === "time" && (
           <>
             <Text style={styles.InfoTitle}>Time:</Text>
             <TextInput
               style={styles.input}
-              value={editableReminder.Time} 
-              onChangeText={(text) => handleEditChange('Time', text)} 
+              value={formattedTime}
+              onChangeText={(text) => handleEditChange("Time", text)}
             />
           </>
         )}
@@ -111,7 +113,7 @@ const ReminderDetails: React.FC<ReminderDetailsProps> = ({ reminder, onClose, on
         <TextInput
           style={styles.input}
           value={editableReminder.details}
-          onChangeText={(text) => handleEditChange('details', text)}
+          onChangeText={(text) => handleEditChange("details", text)}
         />
 
         <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
@@ -129,48 +131,38 @@ const ReminderDetails: React.FC<ReminderDetailsProps> = ({ reminder, onClose, on
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     padding: 20,
     borderRadius: 10,
     width: 300,
     height: 450,
-    justifyContent: 'center',
-  },
-  modalContentTime: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-    width: 300,
-    height: 450,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginTop: 20,
-    color: '#DF6316',
-    left: 53,
-    top: 0,
-    position:'relative',
+    color: "#DF6316",
+    textAlign: "center",
   },
   closeButton: {
-    marginBottom: 20,
-    color: '#DF6316',
+    marginTop: 20,
+    color: "#DF6316",
     fontSize: 16,
-    fontWeight: 'bold',
-    left: 105,
-    top: 0,
+    fontWeight: "bold",
+    textAlign: "center",
   },
   InfoTitle: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
+    marginTop: 10,
   },
   input: {
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderWidth: 1,
     marginBottom: 10,
     padding: 8,
@@ -178,9 +170,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   saveButton: {
-    position: 'relative',
-    top: 0,
-    left: 240,
+    marginTop: 20,
+    alignSelf: "center",
   },
 });
 

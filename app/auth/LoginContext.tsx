@@ -1,17 +1,31 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from "react";
+import config from "@/config";
 
-// Define the types for the context value
+interface Reminder {
+  id: string;
+  title: string;
+  address: string;
+  lat: number;
+  lng: number;
+  details: string; // Ensure consistent naming
+}
+
 interface LoginContextType {
   isLoginComplete: boolean;
   setIsLoginComplete: (isComplete: boolean) => void;
   userId: string | null;
   setUserId: (id: string | null) => void;
+  reminders: Reminder[];
+  fetchReminders: () => Promise<void>;
+  setReminders: (reminders: Reminder[]) => void;
+  reminder: Reminder | null;
+  setReminder: (reminder: Reminder | null) => void;
+  refreshKey: number; 
+  refreshReminders: () => void;
 }
 
-// Create the context with a default value
 const LoginContext = createContext<LoginContextType | undefined>(undefined);
 
-// Custom hook to access the context
 export const useLogin = (): LoginContextType => {
   const context = useContext(LoginContext);
   if (!context) {
@@ -20,7 +34,6 @@ export const useLogin = (): LoginContextType => {
   return context;
 };
 
-// LoginProvider component that wraps the app and provides the login state
 interface LoginProviderProps {
   children: ReactNode;
 }
@@ -28,9 +41,67 @@ interface LoginProviderProps {
 export const LoginProvider: React.FC<LoginProviderProps> = ({ children }) => {
   const [isLoginComplete, setIsLoginComplete] = useState<boolean>(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [reminder, setReminder] = useState<Reminder | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const refreshReminders = () => setRefreshKey((prev) => prev + 1);
+
+  const fetchReminders = useCallback(async () => {
+    if (!userId) {
+      console.warn("User ID is not set. Unable to fetch reminders.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${config.SERVER_API}/users/${userId}/reminders`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        const locationReminders = data.reminders.locationReminders || [];
+        const transformedReminders = locationReminders.map((reminder: any) => ({
+          id: reminder._id.toString(),
+          title: reminder.title,
+          lat: parseFloat(reminder.address.lat),
+          lng: parseFloat(reminder.address.lng),
+          address: reminder.address.name || `${reminder.address.lat}, ${reminder.address.lng}`,
+          details: reminder.details, // Consistent naming
+        }));
+        setReminders(transformedReminders);
+      } else {
+        console.error("Failed to fetch reminders:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching reminders:", error);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (userId) {
+      fetchReminders();
+    }
+  }, [userId, fetchReminders]);
 
   return (
-    <LoginContext.Provider value={{ isLoginComplete, setIsLoginComplete, userId, setUserId }}>
+    <LoginContext.Provider
+      value={{
+        isLoginComplete,
+        setIsLoginComplete,
+        userId,
+        setUserId,
+        reminders,
+        fetchReminders,
+        setReminders,
+        reminder,
+        setReminder,
+        refreshKey,
+        refreshReminders
+      }}
+    >
       {children}
     </LoginContext.Provider>
   );

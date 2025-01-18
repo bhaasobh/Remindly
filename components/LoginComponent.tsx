@@ -43,7 +43,7 @@ const Login = () => {
         
         setIsLoginComplete(true); // Update context state
       } else {
-        console.log(data);
+        //console.log(data);
         Alert.alert('Error', data.error || 'Login failed!');
       }
     } catch (error) {
