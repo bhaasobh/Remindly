@@ -19,7 +19,7 @@ interface Reminder {
   latitude: number;
   longitude: number;
   address: string;
-  text: string;
+  details: string;
   reminderType: 'location' | 'time'; 
 
 }
