@@ -1,34 +1,106 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import config from '@/config';
+import { useLogin } from '@/app/auth/LoginContext';
 
 interface AddReminderModalProps {
   modalVisible: boolean;
   setModalVisible: (visible: boolean) => void;
-  onSaveReminder: (reminder: any) => void; 
+  onSaveReminder: (newReminder: any) => void;
 }
 
 const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setModalVisible, onSaveReminder }) => {
+  const { userId ,refreshReminders} = useLogin(); // Access userId from context
   const [reminderType, setReminderType] = useState<'location' | 'time'>('location');
   const [title, setTitle] = useState('');
-  const [location, setLocation] = useState('');
-  const [radius, setRadius] = useState('');
-  const [time, setTime] = useState('');
+  const [address, setAddress] = useState('');
+  const [radius, setRadius] = useState('200.00');
+  const [Time, setTime] = useState('');
+  const [date, setDate] = useState(new Date());
   const [details, setDetails] = useState('');
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!userId) {
+      Alert.alert('Error', 'User ID is not available. Please log in again.');
+      return;
+    }
+  
+    if (latitude === null || longitude === null) {
+      Alert.alert('Error', 'Please select a valid location.');
+      return;
+    }
+  
     const newReminder = {
       title,
-      reminderType,
-      location,
-      radius,
-      time,
+      address: {
+        name: address,
+        lat: latitude,
+        lng: longitude,
+      },
       details,
     };
- 
-    //this to see if the details were saved here remind me to remove it 
-    console.log('Saved reminder:', newReminder); 
-    onSaveReminder(newReminder); 
-    setModalVisible(false); 
+  
+    try {
+      const apiUrl = `${config.SERVER_API}/users/${userId}/location-reminders`;
+  
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newReminder),
+      });
+  
+      if (response.ok) {
+        const result = await response.json();
+       // console.log('Reminder added successfully:', result);
+  
+        // Add the MongoDB id to the newReminder object
+        const savedReminder = {
+          ...newReminder,
+          id: result.reminder._id, // Ensure your backend returns the `id`
+        };
+  
+        // Call the onSaveReminder with the updated reminder
+        // console.log("reminder id from add ",savedReminder)
+        refreshReminders();
+        onSaveReminder(savedReminder);
+       
+        setModalVisible(false); // Close the modal
+        Alert.alert('Success', 'Reminder added successfully!');
+      } else {
+        const error = await response.json();
+        console.error('Error saving reminder:', error);
+        Alert.alert('Error', 'Failed to add reminder. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error saving reminder:', error);
+      Alert.alert('Error', 'An error occurred. Please try again later.');
+    }
+  };
+  
+  
+
+  const handleAddressSelect = (data: any, details: any) => {
+    if (details && details.geometry && details.geometry.location) {
+      const fullAddress = data.description || '';
+      const lat = details.geometry.location.lat;
+      const lng = details.geometry.location.lng;
+  
+      setAddress(fullAddress);
+      setLatitude(lat);
+      setLongitude(lng);
+  
+      //console.log('Selected Address:', fullAddress, 'Latitude:', lat, 'Longitude:', lng);
+    } else {
+      console.error('Error: Invalid address details.');
+      Alert.alert('Error', 'Unable to fetch address details. Please try again.');
+    }
   };
   
 
@@ -64,12 +136,23 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
 
           {reminderType === 'location' && (
             <>
-              <Text>Location:</Text>
-              <TextInput style={styles.input} value={location} onChangeText={setLocation} />
-              <Text>Radius:</Text>
-              <TextInput style={styles.input} value={radius} onChangeText={setRadius} keyboardType="numeric" />
+              <Text>Address:</Text>
+              <GooglePlacesAutocomplete
+                placeholder="Search your address"
+                minLength={2}
+                fetchDetails={true}
+                onPress={handleAddressSelect}
+                query={{
+                  key: config.GOOGLE_API,
+                  language: 'en',
+                }}
+                styles={{
+                  container: { flex: 0, width: '100%' },
+                  textInput: styles.input,
+                }}
+              />
               <Text>Time:</Text>
-              <TextInput style={styles.input} value={time} onChangeText={setTime} />
+              <TextInput style={styles.input} value={Time} onChangeText={setTime} />
               <Text>Reminder details:</Text>
               <TextInput style={[styles.input, styles.largeInput]} value={details} onChangeText={setDetails} multiline />
             </>
@@ -77,12 +160,28 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
 
           {reminderType === 'time' && (
             <>
+              <Text>Date:</Text>
+              <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+                <Text style={styles.input}>{date.toDateString()}</Text>
+              </TouchableOpacity>
+              {showDatePicker && (
+                <DateTimePicker
+                  value={date}
+                  mode="date"
+                  display="calendar"
+                  onChange={(event, selectedDate) => {
+                    setShowDatePicker(false);
+                    setDate(selectedDate || date);
+                  }}
+                />
+              )}
               <Text>Time:</Text>
-              <TextInput style={styles.input} value={time} onChangeText={setTime} />
+              <TextInput style={styles.input} value={Time} onChangeText={setTime} />
               <Text>Reminder details:</Text>
-              <TextInput style={[styles.input, styles.largeInputForTime]} value={details} onChangeText={setDetails} multiline />
+              <TextInput style={[styles.input, styles.largeInput]} value={details} onChangeText={setDetails} multiline />
             </>
           )}
+
           <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
             <Text style={styles.saveButtonText}>Add Reminder</Text>
           </TouchableOpacity>
@@ -135,7 +234,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     position: 'absolute',
     top: 505,
-    left: 63,
+    left: 100,
   },
   saveButtonText: {
     color: '#fff',
@@ -151,10 +250,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   largeInput: {
-    height: 80,
-  },
-  largeInputForTime: {
-    height: 221.5,
+    height: 146,
   },
   radioGroup: {
     flexDirection: 'row',
