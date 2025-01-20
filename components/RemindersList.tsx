@@ -9,9 +9,14 @@ type Reminder = {
   id: string;
   title: string;
   details: string;
-  address: string;
+  address:{
+    name : string, 
+    lat: number;
+  lng: number;
+  } 
   reminderType: 'location' | 'time';
   Time: string;
+ 
 };
 
 const RemindersList: React.FC = () => {
@@ -37,7 +42,11 @@ const RemindersList: React.FC = () => {
         const transformedLocationReminders = (locationReminders || []).map((reminder: any) => ({
           id: reminder._id?.toString() || '',
           title: reminder.title,
-          address: reminder.address.name || `${reminder.address.lat}, ${reminder.address.lng}`,
+          address :{
+            name : reminder.address.name ,
+            lat : reminder.address.lat,
+            lng : reminder.address.lng,
+          } ,
           reminderType: 'location',
           details: reminder.details || reminder.Details,
         }));
@@ -65,6 +74,9 @@ const RemindersList: React.FC = () => {
   }, [userId]);
  
  
+  // useEffect(() => {
+  //   fetchReminders();
+  // }, [fetchReminders]);
    useEffect(() => {
      fetchReminders();
  

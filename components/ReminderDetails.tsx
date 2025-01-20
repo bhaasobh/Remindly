@@ -1,15 +1,35 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  FlatList,
+  Alert,
+} from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import config from '@/config';
+import { useLogin } from '../app/auth/LoginContext';
+
 
 type Reminder = {
   id: string;
   title: string;
   details: string;
-  address: string;
+  address:{
+    name : string, 
+    lat: number;
+  lng: number;
+  } 
   reminderType: 'location' | 'time';
   Time: string;
+ 
+};
+
+type PlacePrediction = {
+  description: string;
+  place_id: string;
 };
 
 type ReminderDetailsProps = {
@@ -19,64 +39,114 @@ type ReminderDetailsProps = {
 };
 
 const ReminderDetails: React.FC<ReminderDetailsProps> = ({ reminder, onClose, onSave }) => {
-  if (!reminder) {
-    return null;
-  }
+  if (!reminder) return null;
 
   const [editableReminder, setEditableReminder] = useState(reminder);
-
+  const [prev_address , setprev_address] = useState('');
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<PlacePrediction[]>([]);
+  const { userId ,refreshReminders } = useLogin();
+  
+   useEffect(() => {
+    console.log("edit reminder \n",editableReminder.address.name);
+     setprev_address(editableReminder.address.name);
+   
+     });
   const handleEditChange = (field: keyof Reminder, value: string) => {
     setEditableReminder((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = async () => {
-    if (editableReminder) {
-      try {
-        const url =
-          editableReminder.reminderType === 'location'
-            ? `${config.SERVER_API}/location-reminders/${editableReminder.id}`
-            : `${config.SERVER_API}/time-reminders/${editableReminder.id}`;
+  const fetchPlaces = async (text: string) => {
+    setQuery(text);
 
-        const dataToSave = {
-          ...editableReminder,
-          details: editableReminder.reminderType === 'location' ? editableReminder.details : undefined,
-          Details: editableReminder.reminderType === 'time' ? editableReminder.details : undefined,
-        };
+    if (text.length < 2) {
+      setSuggestions([]);
+      return;
+    }
 
-        const response = await fetch(url, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(dataToSave),
-        });
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${text}&key=${config.GOOGLE_API}&language=en`
+      );
+      const data = await response.json();
 
-        const data = await response.json();
-
-        if (response.ok) {
-          onSave(editableReminder); 
-          Alert.alert('Success', 'Reminder updated successfully.');
-        } else {
-          Alert.alert('Error', data.message || 'Failed to update reminder.');
-        }
-      } catch (error) {
-        console.error('Error updating reminder:', error);
-        Alert.alert('Error', 'An error occurred while updating reminder.');
+      if (data.status === 'OK') {
+        setSuggestions(data.predictions);
+      } else {
+        console.error('Error fetching places:', data);
       }
+    } catch (error) {
+      console.error('Error fetching places:', error);
     }
   };
 
-  const parsedDate = editableReminder.Time ? new Date(editableReminder.Time) : null;
-  const formattedTime = parsedDate && !isNaN(parsedDate.getTime())
-    ? parsedDate.toLocaleString()
-    : 'No time specified';
+  const handlePlaceSelect = (place: PlacePrediction) => {
+    setQuery(place.description);
+    setSuggestions([]);
+  
+    fetch(
+      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&key=${config.GOOGLE_API}`
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        const { lat, lng } = data.result.geometry.location;
+        console.log("data \n", data.result.geometry);
+        console.log("place.description \n", place.description);
+        setEditableReminder((prev) => ({
+          ...prev,
+          address: {
+            name: place.description,
+            lat,
+            lng,
+          },
+        }));
+        console.log('editableReminder \n', editableReminder.address.lat);
+      })
+      .catch((error) => {
+        console.error('Error fetching place details:', error);
+      });
+  };
+  
+
+  const handleSave = async () => {
+    if (!editableReminder.title || !editableReminder.details) {
+      Alert.alert('Validation Error', 'Please fill in all required fields.');
+      return;
+    }
+
+    try {
+      const url =
+        editableReminder.reminderType === 'location'
+          ? `${config.SERVER_API}/location-reminders/${editableReminder.id}`
+          : `${config.SERVER_API}/time-reminders/${editableReminder.id}`;
+      console.log('url : ',url)
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editableReminder),
+      });
+      console.log('json : \n',JSON.stringify(editableReminder))
+      if (response.ok) {
+        onSave(editableReminder);
+        Alert.alert('Success', 'Reminder updated successfully.');
+      refreshReminders ();
+
+        onClose();
+      } else {
+        const data = await response.json();
+        Alert.alert('Error', data.message || 'Failed to update reminder.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An error occurred while updating the reminder.');
+    }
+  };
 
   return (
     <View style={styles.modalOverlay}>
       <View style={styles.modalContent}>
-        <Text style={styles.modalTitle}>Reminder Details</Text>
+        <Text style={styles.modalTitle}>Edit Reminder</Text>
 
-        <Text style={styles.InfoTitle}>Name:</Text>
+        <Text style={styles.InfoTitle}>Title:</Text>
         <TextInput
           style={styles.input}
           value={editableReminder.title}
@@ -85,14 +155,30 @@ const ReminderDetails: React.FC<ReminderDetailsProps> = ({ reminder, onClose, on
 
         {editableReminder.reminderType === 'location' && (
           <>
-            <Text style={styles.InfoTitle}>Address:</Text>
-            <Text style={styles.InfoTitle}>current address:</Text>
-            <Text>{editableReminder.address}</Text>
-            <Text style={styles.InfoTitle}>the new address:</Text>
+            <Text style={styles.InfoTitle}>Current Address:</Text>
+            <Text style={styles.currentAddress}>{prev_address?prev_address:editableReminder.address.name}</Text>
+
+            <Text style={styles.InfoTitle}>New Address:</Text>
             <TextInput
               style={styles.input}
-              onChangeText={(text) => handleEditChange('address', text)}
+              placeholder="Search for a location"
+              value={query}
+              onChangeText={fetchPlaces}
             />
+            {suggestions.length > 0 && (
+              <FlatList
+                data={suggestions}
+                keyExtractor={(item) => item.place_id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.suggestionRow}
+                    onPress={() => handlePlaceSelect(item)}
+                  >
+                    <Text style={styles.suggestionText}>{item.description}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            )}
           </>
         )}
 
@@ -101,8 +187,8 @@ const ReminderDetails: React.FC<ReminderDetailsProps> = ({ reminder, onClose, on
             <Text style={styles.InfoTitle}>Time:</Text>
             <TextInput
               style={styles.input}
-              value={editableReminder.Time} 
-              onChangeText={(text) => handleEditChange('Time', text)} 
+              value={editableReminder.Time}
+              onChangeText={(text) => handleEditChange('Time', text)}
             />
           </>
         )}
@@ -114,13 +200,15 @@ const ReminderDetails: React.FC<ReminderDetailsProps> = ({ reminder, onClose, on
           onChangeText={(text) => handleEditChange('details', text)}
         />
 
-        <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
-          <FontAwesome name="save" size={24} color="#DF6316" />
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={onClose}>
-          <Text style={styles.closeButton}>Close</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
+            <FontAwesome name="save" size={24} color="#fff" />
+            <Text style={styles.saveButtonText}>Save</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Text style={styles.closeButtonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -138,49 +226,61 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     width: 300,
-    height: 450,
-    justifyContent: 'center',
-  },
-  modalContentTime: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-    width: 300,
-    height: 450,
-    justifyContent: 'center',
+    height: 500,
+    justifyContent: 'space-between',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 20,
     color: '#DF6316',
-    left: 53,
-    top: 0,
-    position:'relative',
-  },
-  closeButton: {
-    marginBottom: 20,
-    color: '#DF6316',
-    fontSize: 16,
-    fontWeight: 'bold',
-    left: 105,
-    top: 0,
   },
   InfoTitle: {
     fontWeight: 'bold',
+    marginVertical: 5,
+  },
+  currentAddress: {
+    color: '#444',
+    fontSize: 16,
+    marginBottom: 10,
   },
   input: {
     borderColor: '#ccc',
     borderWidth: 1,
-    marginBottom: 10,
     padding: 8,
     borderRadius: 5,
     fontSize: 16,
+    marginBottom: 10,
+  },
+  suggestionRow: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  suggestionText: {
+    fontSize: 16,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   saveButton: {
-    position: 'relative',
-    top: 0,
-    left: 240,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#16df27',
+    padding: 10,
+    borderRadius: 5,
+  },
+  saveButtonText: {
+    color: '#fff',
+    marginLeft: 5,
+    fontWeight: 'bold',
+  },
+  closeButton: {
+    padding: 10,
+  },
+  closeButtonText: {
+    color: '#DF6316',
+    fontWeight: 'bold',
   },
 });
 
