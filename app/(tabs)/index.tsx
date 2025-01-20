@@ -12,17 +12,16 @@ const BOX_HEIGHT = 300;
 const MAX_HEIGHT = SCREEN_HEIGHT * 0.8;
 const MIN_HEIGHT = 300;
 
-interface Reminder {
-  name: string;  
+type Reminder = {
   id: string;
   title: string;
-  latitude: number;
-  longitude: number;
-  address: string;
   details: string;
-  reminderType: 'location' | 'time'; 
-
-}
+  address: string;
+  reminderType: 'location' | 'time';
+  Time: string;
+  lat: number;
+  lng: number;
+};
 
 const Home: React.FC = () => {
   const [locationReminders, setLocationReminders] = useState<Reminder[]>([]);
@@ -58,7 +57,7 @@ const Home: React.FC = () => {
   return (
     <View style={styles.container}>
       <Header />
-      <MapComponent reminders={locationReminders} />
+      <MapComponent  />
       <Animated.View style={[styles.slideUpBox, { height: heightAnim }]}>
         <View style={styles.handle}>
           <TouchableOpacity onPress={toggleHeight}>

@@ -10,9 +10,14 @@ type Reminder = {
   id: string;
   title: string;
   details: string;
-  address: string;
+  address:{
+    name : string, 
+    lat: number;
+    lng: number;
+  } 
   reminderType: 'location' | 'time';
-  Time: string; 
+  Time: string;
+ 
 };
 
 type ShowReminderProps = {
@@ -70,7 +75,7 @@ const ShowReminder: React.FC<ShowReminderProps> = ({ reminder, onClose, onDelete
     <View style={styles.modalOverlay}>
       <View style={[styles.modalContent, { height: modalHeight }]}>
         <Text style={styles.modalTitle}>Reminder Details</Text>
-
+        
         {isEditing ? (
           <ReminderDetails
             reminder={reminder}
@@ -85,7 +90,7 @@ const ShowReminder: React.FC<ShowReminderProps> = ({ reminder, onClose, onDelete
             {reminder.reminderType === 'location' && (
               <>
                 <Text style={styles.InfoTitle}>Address:</Text>
-                <Text>{reminder.address}</Text>
+                <Text>{reminder.address.name}</Text>
               </>
             )}
 
