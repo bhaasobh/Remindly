@@ -17,8 +17,6 @@ const Login = () => {
   const handleCloseModal = () => setModalVisible(false);
 
   const handleLogin = async () => {
-    // setIsLoginComplete(true);
-    // return
 
     if (!username || !password) {
       Alert.alert('Error', 'Please fill in both username and password.');
@@ -38,10 +36,8 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setUserId(data.user._id);
-        Alert.alert('Success', 'Login successful!');
-        
-        setIsLoginComplete(true); // Update context state
+        setUserId(data.user._id);        
+        setIsLoginComplete(true); 
       } else {
         console.log(data);
         Alert.alert('Error', data.error || 'Login failed!');
@@ -59,6 +55,7 @@ const Login = () => {
       <View style={styles.container}>
         <View style={styles.topBackground} />
         <Image source={require('../assets/images/Logo.png')} style={styles.logo} />
+        <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
           placeholder="Username"
@@ -79,7 +76,7 @@ const Login = () => {
           <Text style={styles.signUpText}>Sign Up</Text>
         </TouchableOpacity>
         <SignupComponent visible={modalVisible} onClose={handleCloseModal} />
-
+        </View>
         {loading && (
           <Modal transparent={true} animationType="fade" visible={loading}>
             <View style={styles.loadingOverlay}>
@@ -100,15 +97,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     backgroundColor: '#FF9A5B',
+    
   },
   topBackground: {
+    position: 'absolute',
+
     width: '110%',
     height: '100%',
     backgroundColor: '#ffff',
     borderTopLeftRadius: 124,
     borderTopRightRadius: 124,
-    position: 'absolute',
-    top: '10%',
+    top:73,
   },
   input: {
     width: 282,
@@ -126,6 +125,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     borderRadius: 5,
     marginBottom: 10,
+    width:134,
+    left:75,
   },
   buttonText: {
     color: '#fff',
@@ -136,11 +137,15 @@ const styles = StyleSheet.create({
     color: '#DF6316',
     paddingVertical: 10,
     textDecorationLine: 'underline',
+    left:116,
+
   },
   logo: {
+    position: 'absolute',
     width: 333,
     height: 247,
     marginBottom: 20,
+    top:162,
   },
   loadingOverlay: {
     flex: 1,
@@ -152,6 +157,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
     color: '#fff',
     fontSize: 16,
+  },
+  inputContainer:{
+    position: 'absolute',
+    top:392,
+
   },
 });
 

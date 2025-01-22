@@ -12,19 +12,17 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import config from '@/config';
 import { useLogin } from '../app/auth/LoginContext';
 
-
 type Reminder = {
   id: string;
   title: string;
   details: string;
-  address:{
-    name : string, 
+  address: {
+    name: string;
     lat: number;
-  lng: number;
-  } 
+    lng: number;
+  };
   reminderType: 'location' | 'time';
   Time: string;
- 
 };
 
 type PlacePrediction = {
@@ -42,16 +40,18 @@ const ReminderDetails: React.FC<ReminderDetailsProps> = ({ reminder, onClose, on
   if (!reminder) return null;
 
   const [editableReminder, setEditableReminder] = useState(reminder);
-  const [prev_address , setprev_address] = useState('');
+  const [prev_address, setPrevAddress] = useState('');
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<PlacePrediction[]>([]);
-  const { userId ,refreshReminders } = useLogin();
-  
-   useEffect(() => {
-    console.log("edit reminder \n",editableReminder.address.name);
-     setprev_address(editableReminder.address.name);
-   
-     });
+  const { userId, refreshReminders } = useLogin();
+
+  useEffect(() => {
+    if (editableReminder.address?.name) {
+      setPrevAddress(editableReminder.address.name);
+    }
+  }, [editableReminder.address]);
+  const isTimeReminder = editableReminder.reminderType === 'time';
+
   const handleEditChange = (field: keyof Reminder, value: string) => {
     setEditableReminder((prev) => ({ ...prev, [field]: value }));
   };
@@ -83,15 +83,13 @@ const ReminderDetails: React.FC<ReminderDetailsProps> = ({ reminder, onClose, on
   const handlePlaceSelect = (place: PlacePrediction) => {
     setQuery(place.description);
     setSuggestions([]);
-  
+
     fetch(
       `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&key=${config.GOOGLE_API}`
     )
       .then((response) => response.json())
       .then((data) => {
         const { lat, lng } = data.result.geometry.location;
-        console.log("data \n", data.result.geometry);
-        console.log("place.description \n", place.description);
         setEditableReminder((prev) => ({
           ...prev,
           address: {
@@ -100,13 +98,11 @@ const ReminderDetails: React.FC<ReminderDetailsProps> = ({ reminder, onClose, on
             lng,
           },
         }));
-        console.log('editableReminder \n', editableReminder.address.lat);
       })
       .catch((error) => {
         console.error('Error fetching place details:', error);
       });
   };
-  
 
   const handleSave = async () => {
     if (!editableReminder.title || !editableReminder.details) {
@@ -119,18 +115,24 @@ const ReminderDetails: React.FC<ReminderDetailsProps> = ({ reminder, onClose, on
         editableReminder.reminderType === 'location'
           ? `${config.SERVER_API}/location-reminders/${editableReminder.id}`
           : `${config.SERVER_API}/time-reminders/${editableReminder.id}`;
-      console.log('url : ',url)
+
+      const dataToSave = {
+        ...editableReminder,
+        Details: editableReminder.reminderType === 'time' ? editableReminder.details : undefined,
+      };
+
       const response = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editableReminder),
+        body: JSON.stringify(dataToSave),
       });
-      console.log('json : \n',JSON.stringify(editableReminder))
+
       if (response.ok) {
         onSave(editableReminder);
         Alert.alert('Success', 'Reminder updated successfully.');
-      refreshReminders ();
-
+        if (editableReminder.reminderType === 'location') {
+          refreshReminders();
+        }
         onClose();
       } else {
         const data = await response.json();
@@ -143,7 +145,12 @@ const ReminderDetails: React.FC<ReminderDetailsProps> = ({ reminder, onClose, on
 
   return (
     <View style={styles.modalOverlay}>
-      <View style={styles.modalContent}>
+      <View
+        style={[
+          styles.modalContent,
+          { height: editableReminder.reminderType === 'time' ? 380 : 470 },
+        ]}
+      >
         <Text style={styles.modalTitle}>Edit Reminder</Text>
 
         <Text style={styles.InfoTitle}>Title:</Text>
@@ -156,7 +163,9 @@ const ReminderDetails: React.FC<ReminderDetailsProps> = ({ reminder, onClose, on
         {editableReminder.reminderType === 'location' && (
           <>
             <Text style={styles.InfoTitle}>Current Address:</Text>
-            <Text style={styles.currentAddress}>{prev_address?prev_address:editableReminder.address.name}</Text>
+            <Text style={styles.currentAddress}>
+              {prev_address || editableReminder.address?.name}
+            </Text>
 
             <Text style={styles.InfoTitle}>New Address:</Text>
             <TextInput
@@ -226,8 +235,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     width: 300,
-    height: 500,
-    justifyContent: 'space-between',
+    marginBottom: 15,
   },
   modalTitle: {
     fontSize: 18,
@@ -236,12 +244,11 @@ const styles = StyleSheet.create({
   },
   InfoTitle: {
     fontWeight: 'bold',
-    marginVertical: 5,
+    marginVertical: 9,
   },
   currentAddress: {
     color: '#444',
     fontSize: 16,
-    marginBottom: 10,
   },
   input: {
     borderColor: '#ccc',
@@ -249,11 +256,9 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 5,
     fontSize: 16,
-    marginBottom: 10,
   },
   suggestionRow: {
     padding: 10,
-    borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
   suggestionText: {
@@ -269,6 +274,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#16df27',
     padding: 10,
     borderRadius: 5,
+    marginTop: 20,
   },
   saveButtonText: {
     color: '#fff',
@@ -277,6 +283,9 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 10,
+    position: 'absolute',
+    left: 207,
+    marginTop: 20,
   },
   closeButtonText: {
     color: '#DF6316',

@@ -46,30 +46,49 @@ const ShowReminder: React.FC<ShowReminderProps> = ({ reminder, onClose, onDelete
 
   const modalHeight = reminder.reminderType === 'time' ? 300 : 340; 
   const deleteReminder = async (id: string, reminder: Reminder) => {
-    const url =
-      reminder.reminderType === 'location'
-        ? `${config.SERVER_API}/location-reminders/${id}`
-        : `${config.SERVER_API}/time-reminders/${id}`;
-
-    try {
-      const response = await fetch(url, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
+    Alert.alert(
+      'Confirm Deletion',
+      'Are you sure you want to delete this reminder?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
         },
-      });
+        {
+          text: 'Yes',
+          onPress: async () => {
+            const url =
+              reminder.reminderType === 'location'
+                ? `${config.SERVER_API}/location-reminders/${id}`
+                : `${config.SERVER_API}/time-reminders/${id}`;
+  
+            try {
+              const response = await fetch(url, {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+              });
+  
+              if (response.ok) {
+                Alert.alert('Success', 'Reminder deleted successfully');
+                if(reminder.reminderType === 'location')
+                  refreshReminders();
 
-      if (response.ok) {
-        Alert.alert('Success','Reminder deleted successfully');
-        onDelete(id);
-        refreshReminders();
-      } else {
-        console.error('Failed to delete reminder');
-      }
-    } catch (error) {
-      console.error('Error deleting reminder:', error);
-    }
+                onDelete(id);
+              } else {
+                console.error('Failed to delete reminder');
+              }
+            } catch (error) {
+              console.error('Error deleting reminder:', error);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
+  
 
   return (
     <View style={styles.modalOverlay}>
@@ -94,12 +113,13 @@ const ShowReminder: React.FC<ShowReminderProps> = ({ reminder, onClose, onDelete
               </>
             )}
 
-            {reminder.reminderType === 'time' && (
+           {reminder.reminderType === 'time' && (
               <>
-                <Text style={styles.InfoTitle}>Time:</Text>
-                <Text>{reminder.Time}</Text>
+                 <Text style={styles.InfoTitle}>Date:                 Time:</Text>
+                 <Text>{new Date(reminder.Time).toLocaleDateString('en-GB')}     {new Date(reminder.Time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</Text>
               </>
             )}
+
 
             <Text style={styles.InfoTitle}>Details:</Text>
             <Text>{reminder.details}</Text>
