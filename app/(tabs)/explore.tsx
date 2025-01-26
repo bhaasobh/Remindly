@@ -7,11 +7,10 @@ import { useLogin } from '../auth/LoginContext';
 import config from '../../config';
 
 interface ShoppingItem {
-  id: string;
-  name: string;
-  quantity: number;
-  averageDays: number;
-  purchaseDate: Date;
+  _id: string;
+  itemName: string;
+  qty: number;
+  days: number;
 }
 
 interface PersonalItem {
@@ -27,43 +26,63 @@ export default function TabTwoScreen() {
   const [isShoppingList, setIsShoppingList] = useState(true);
 
   // Fetch shopping and personal lists
-  useEffect(() => {
-    const fetchLists = async () => {
-      try {
-        const shoppingResponse = await fetch(
-          `${config.SERVER_API}/shopping-list/alllist/${userId}`,
-          { method: 'GET' }
-        );
-        const shoppingData = await shoppingResponse.json();
-        if (shoppingResponse.ok) {
-          setShoppingList(shoppingData.items || []);
-        } else {
-          console.error('Failed to fetch shopping list:', shoppingData.error);
-        }
-      } catch (error) {
-        console.error('Error fetching shopping list:', error);
-        Alert.alert('Error', 'Failed to load the shopping list.');
-      }
+    useEffect(() => {
+      const fetchShoppingList = async () => {
+        try {
+          const shoppingResponse = await fetch(`${config.SERVER_API}/shopping-list/alllist/${userId}`, {
+            method: 'GET',
+          });
+          const shoppingData = await shoppingResponse.json();
+      
+          // console.log('Shopping List API Response:', shoppingData);
 
-      try {
-        const personalResponse = await fetch(
-          `${config.SERVER_API}/users/${userId}/personal-items`,
-          { method: 'GET' }
-        );
-        const personalData = await personalResponse.json();
-        if (personalResponse.ok) {
-          setPersonalList(personalData.personalItems || []);
-        } else {
-          console.error('Failed to fetch personal list:', personalData.error);
+      
+          if (shoppingResponse.ok) {
+            if (Array.isArray(shoppingData)) {
+              setShoppingList(shoppingData);
+            } else {
+              console.error('Unexpected shopping data format:', shoppingData);
+              Alert.alert('Error', 'Invalid shopping list data.');
+            }
+          } else {
+            console.error('Failed to fetch shopping list:', shoppingData.error || 'Unknown error');
+            Alert.alert('Error', shoppingData.error || 'Failed to load the shopping list.');
+          }
+        } catch (error) {
+          console.error('Error fetching shopping list:', error);
+          Alert.alert('Error', 'Failed to load the shopping list.');
         }
-      } catch (error) {
-        console.error('Error fetching personal list:', error);
-        Alert.alert('Error', 'Failed to load the personal list.');
-      }
-    };
-
-    fetchLists();
-  }, [userId]);
+      };
+      
+    
+      const fetchPersonalList = async () => {
+        try {
+          const personalResponse = await fetch(
+            `${config.SERVER_API}/users/${userId}/personal-items`,
+            { method: 'GET' }
+          );
+    
+          const personalData = await personalResponse.json();
+    
+          // console.log('Personal List Response:', personalData);
+    
+          if (personalResponse.ok) {
+            setPersonalList(personalData.personalItems || []);
+          } else {
+            console.error('Failed to fetch personal list:', personalData.error);
+            Alert.alert('Error', personalData.error || 'Failed to load the personal list.');
+          }
+        } catch (error) {
+          console.error('Error fetching personal list:', error);
+          Alert.alert('Error', 'Failed to load the personal list.');
+        }
+      };
+    
+      // Call both functions independently
+      fetchShoppingList();
+      fetchPersonalList();
+    }, [userId]);
+    
 
   // Add item to personal list
   const handleAddPersonalItem = async (name: string) => {
@@ -94,27 +113,32 @@ export default function TabTwoScreen() {
 
   // Add item to shopping list
   const handleAddShoppingItem = async (name: string, quantity: number, averageDays: number) => {
+    const newItem = { itemName: name, qty: quantity, days: averageDays };
+
     try {
       const response = await fetch(`${config.SERVER_API}/shopping-list/${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemName: name, qty: quantity, days: averageDays }),
+        body: JSON.stringify(newItem),
       });
-      const data = await response.json();
-      if (response.ok && data.item) {
+
+      const data = await response.json().catch(() => {
+        console.error('Error parsing response JSON');
+        return { error: 'Invalid JSON response from server' };
+      });
+      
+      console.log('Response Status:', response.status);
+      console.log('Response Data:', data);
+      
+      // Adjust to check for `data.newItem`
+      if (response.ok && data.newItem) {
         setShoppingList((prev) => [
           ...prev,
-          {
-            id: data.item._id,
-            name: data.item.itemName,
-            quantity: data.item.qty,
-            averageDays: data.item.days,
-            purchaseDate: new Date(data.item.purchaseDate),
-          },
+          { _id: data.newItem._id, itemName: data.newItem.itemName, qty: data.newItem.qty, days: data.newItem.days },
         ]);
       } else {
-        console.error('Server Error:', data.error);
-        Alert.alert('Error', 'Failed to save shopping item.');
+        console.error('Server Error:', data.error || 'Unknown error');
+        Alert.alert('Error', data.error || 'Failed to save shopping item.');
       }
     } catch (error) {
       console.error('Error adding shopping item:', error);
@@ -123,12 +147,32 @@ export default function TabTwoScreen() {
   };
 
   // Remove item from shopping list
+  const handleRemoveShoppingItem = async (id: string) => {
+    try {
+      const response = await fetch(`${config.SERVER_API}/personal-items/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setShoppingList((prev) => prev.filter((item) => item._id !== id));
+      } else {
+        const data = await response.json();
+        console.error('Server Error:', data.error);
+        Alert.alert('Error', 'Failed to delete shopping item.');
+      }
+    } catch (error) {
+      console.error('Error deleting shopping item:', error);
+      Alert.alert('Error', 'Failed to delete the shopping item.');
+    }
+  };
+
+  // Remove item from personal list
   const handleRemovePersonalItem = async (id: string) => {
     try {
       const response = await fetch(`${config.SERVER_API}/personal-items/${id}`, {
         method: 'DELETE',
       });
-  
+
       if (response.ok) {
         setPersonalList((prev) => prev.filter((item) => item._id !== id));
       } else {
@@ -164,16 +208,14 @@ export default function TabTwoScreen() {
           items={shoppingList}
           onAddItem={() => setModalVisible(true)}
           onRemoveAll={() => setShoppingList([])}
-          onRemoveItem={handleRemovePersonalItem}
+          onRemoveItem={handleRemoveShoppingItem}
         />
       ) : (
         <PersonalList
           items={personalList}
           onAddItem={() => setModalVisible(true)}
           onRemoveAll={() => setPersonalList([])}
-          // onRemoveItem={(id) => setPersonalList((prev) => prev.filter((item) => item.id !== id))}
-         onRemoveItem={handleRemovePersonalItem}
-
+          onRemoveItem={handleRemovePersonalItem}
         />
       )}
       <ItemInputModal
