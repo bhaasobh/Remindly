@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Linking } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import ReminderDetails from './ReminderDetails'; 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import config from '@/config';
 import { useLogin } from '@/app/auth/LoginContext';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 type Reminder = {
   id: string;
@@ -43,7 +44,21 @@ const ShowReminder: React.FC<ShowReminderProps> = ({ reminder, onClose, onDelete
   const handleCloseEdit = () => {
     setIsEditing(false); 
   };
-
+  const handleNavigateToWaze = () => {
+    if (!reminder?.address) {
+      Alert.alert('Error', 'No address found for this reminder');
+      return;
+    }
+  
+    const { lat, lng } = reminder.address;
+    const wazeUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+  
+    Linking.openURL(wazeUrl).catch((err) => {
+      console.error('Failed to open Waze:', err);
+      Alert.alert('Error', 'Unable to open Waze. Please try again.');
+    });
+  };
+  
   const modalHeight = reminder.reminderType === 'time' ? 300 : 340; 
   const deleteReminder = async (id: string, reminder: Reminder) => {
     Alert.alert(
@@ -123,14 +138,19 @@ const ShowReminder: React.FC<ShowReminderProps> = ({ reminder, onClose, onDelete
 
             <Text style={styles.InfoTitle}>Details:</Text>
             <Text>{reminder.details}</Text>
-
+            
             <View style={styles.actionButtons}>
               <TouchableOpacity onPress={onClose} style={styles.closeButtonContainer}>
                 <Text style={styles.closeButton}>Close</Text>
               </TouchableOpacity>
+              <TouchableOpacity onPress={handleNavigateToWaze} style={styles.wazeButton}>
+  <FontAwesome5 name="waze" size={24} color="black" />
+</TouchableOpacity>
+
               <TouchableOpacity onPress={handleEdit} style={styles.editButton}>
                 <MaterialIcons name="edit" size={24} color="black" />
               </TouchableOpacity>
+               
               <TouchableOpacity onPress={() => deleteReminder(reminder.id, reminder)} style={styles.deleteButton}>
                 <FontAwesome name="trash" size={24} color="red" />
               </TouchableOpacity>
@@ -186,7 +206,12 @@ const styles = StyleSheet.create({
   editButton: {
     padding: 10,
     borderRadius: 5,
-    left: 73,
+    left: 40,
+  },
+  wazeButton: {
+    padding: 10,
+    borderRadius: 5,
+    left: 70,
   },
   deleteButton: {
     padding: 10,
