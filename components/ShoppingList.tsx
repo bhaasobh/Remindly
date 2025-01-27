@@ -3,53 +3,49 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react
 import { Entypo } from '@expo/vector-icons';
 
 interface ShoppingListProps {
-  items: { name: string; quantity: number; averageDays: number; purchaseDate: Date }[];
+  items: { _id: string; itemName: string; qty: number; days: number }[];
   onAddItem: () => void;
   onRemoveAll: () => void;
-  onRemoveItem: (index: number) => void;
+  onRemoveItem: (id: string) => void;
 }
 
-export const ShoppingList: React.FC<ShoppingListProps> = ({ items, onAddItem, onRemoveAll, onRemoveItem }) => {
-  // פונקציה שבודקת אם פריטים קרובים להיגמר
+export const ShoppingList: React.FC<ShoppingListProps> = ({
+  items,
+  onAddItem,
+  onRemoveAll,
+  onRemoveItem,
+}) => {
+  // בדיקת תפוגת פריטים
   const checkExpiryDates = () => {
-    const currentDate = new Date();
     items.forEach((item) => {
-      const timeElapsed = Math.floor(
-        (currentDate.getTime() - new Date(item.purchaseDate).getTime()) / (1000 * 60 * 60 * 24)
-      );
-      if (timeElapsed >= item.averageDays) {
-        Alert.alert('Reminder', `${item.name} is running out based on your usage pattern.`);
+      if (item.days <= 0) {
+        Alert.alert('Reminder', `${item.itemName} is running out!`);
       }
     });
   };
 
-  // קריאה לפונקציה בכל פעם שהרשימה משתנה
   useEffect(() => {
-    const interval = setInterval(() => {
-      checkExpiryDates();
-    }, 24 * 60 * 60 * 1000); // בדיקה כל יום
-    return () => clearInterval(interval); // ניקוי ה-interval
+    const interval = setInterval(checkExpiryDates, 24 * 60 * 60 * 1000); // בדיקה כל יום
+    return () => clearInterval(interval);
   }, [items]);
 
   return (
     <View style={styles.container}>
       <FlatList
         data={items}
-        renderItem={({ item, index }) => (
+        renderItem={({ item }) => (
           <View style={styles.itemContainer}>
             <Text style={styles.itemText}>
-              {item.name} - Quantity: {item.quantity}
+              {item.itemName} - Quantity: {item.qty}, Days: {item.days}
             </Text>
-            <TouchableOpacity onPress={() => onRemoveItem(index)}>
+            <TouchableOpacity onPress={() => onRemoveItem(item._id)}>
               <Entypo name="trash" size={20} color="#DF6316" />
             </TouchableOpacity>
           </View>
         )}
-        keyExtractor={(item, index) => index.toString()}
+        keyExtractor={(item) => item._id}
         ListEmptyComponent={<Text style={styles.emptyText}>No items in the shopping list</Text>}
       />
-
-      {/* כפתורים */}
       <View style={styles.actionButtons}>
         <TouchableOpacity style={styles.addButton} onPress={onAddItem}>
           <Text style={styles.addButtonText}>Add Item</Text>
@@ -71,9 +67,7 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({ items, onAddItem, on
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   itemContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -81,39 +75,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: '#ddd',
   },
-  itemText: {
-    fontSize: 18,
+  itemText: { fontSize: 18 },
+  emptyText: { textAlign: 'center', marginTop: 50, fontSize: 18, color: '#888' },
+  actionButtons: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 ,
+    bottom: 100
   },
-  emptyText: {
-    textAlign: 'center',
-    marginTop: 50,
-    fontSize: 18,
-    color: '#888',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 20,
-    paddingBottom: 100
-  },
-  addButton: {
-    backgroundColor: '#DF6316',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 18,
-  },
-  deleteButton: {
-    backgroundColor: '#FF4C4C',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-  },
-  deleteButtonText: {
-    color: '#fff',
-    fontSize: 18,
-  },
+  addButton: { backgroundColor: '#DF6316', paddingVertical: 15, paddingHorizontal: 20, borderRadius: 5 },
+  addButtonText: { color: '#fff', fontSize: 18 },
+  deleteButton: { backgroundColor: '#FF4C4C', paddingVertical: 15, paddingHorizontal: 20, borderRadius: 5 },
+  deleteButtonText: { color: '#fff', fontSize: 18 },
 });

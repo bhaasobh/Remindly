@@ -8,11 +8,11 @@ import { useLogin } from '@/app/auth/LoginContext';
 interface AddReminderModalProps {
   modalVisible: boolean;
   setModalVisible: (visible: boolean) => void;
-  onSaveReminder: (newReminder: any) => void;
+  onSaveReminder: (reminder: any) => void;
 }
 
 const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setModalVisible, onSaveReminder }) => {
-  const { userId ,refreshReminders} = useLogin(); // Access userId from context
+  const { userId, refreshReminders } = useLogin(); // Access userId from context
   const [reminderType, setReminderType] = useState<'location' | 'time'>('location');
   const [title, setTitle] = useState('');
   const [address, setAddress] = useState('');
@@ -29,80 +29,90 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
       Alert.alert('Error', 'User ID is not available. Please log in again.');
       return;
     }
-  
+
+    if (reminderType === 'time') {
+      const timeArray = Time.split(':');
+      const updatedDate = new Date(date);
+      updatedDate.setHours(parseInt(timeArray[0]));
+      updatedDate.setMinutes(parseInt(timeArray[1]));
+      setDate(updatedDate);
+    }
+
     if (latitude === null || longitude === null) {
       Alert.alert('Error', 'Please select a valid location.');
       return;
     }
-  
+
     const newReminder = {
       title,
-      address: {
-        name: address,
-        lat: latitude,
-        lng: longitude,
-      },
+      reminderType,
+      address: reminderType === 'location' ? { name: address, lat: latitude, lng: longitude } : '',
       details,
+      Time: reminderType === 'time' ? date.toISOString() : '',
+      latitude,
+      longitude,
     };
-  
+
+    console.log('Saved reminder:', newReminder);
+    onSaveReminder(newReminder);
+
+    setModalVisible(false); // Close the modal
+    saveReminderToDatabase(newReminder); // Save reminder to database
+    refreshReminders(); // Refresh reminders
+  };
+
+  const handleAddressSelect = (data: any, details: any) => {
+    if (details) {
+      const fullAddress = data.description;
+      const lat = details.geometry.location.lat;
+      const lng = details.geometry.location.lng;
+      setAddress(fullAddress);
+      setLatitude(lat);
+      setLongitude(lng);
+    } else {
+      Alert.alert('Error', 'Unable to fetch address details. Please try again.');
+    }
+  };
+
+  const saveReminderToDatabase = async (reminder: any) => {
     try {
-      const apiUrl = `${config.SERVER_API}/users/${userId}/location-reminders`;
-  
-      const response = await fetch(apiUrl, {
+      const url =
+        reminder.reminderType === 'location'
+          ? `${config.SERVER_API}/users/${userId}/location-reminders`
+          : `${config.SERVER_API}/users/${userId}/time-reminders`;
+
+      const body =
+        reminder.reminderType === 'location'
+          ? {
+              title: reminder.title,
+              address: reminder.address,
+              details: reminder.details,
+            }
+          : {
+              title: reminder.title,
+              details: reminder.details,
+              Time: reminder.Time,
+            };
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newReminder),
+        body: JSON.stringify(body),
       });
-  
+
+      const result = await response.json();
       if (response.ok) {
-        const result = await response.json();
-       // console.log('Reminder added successfully:', result);
-  
-        // Add the MongoDB id to the newReminder object
-        const savedReminder = {
-          ...newReminder,
-          id: result.reminder._id, // Ensure your backend returns the `id`
-        };
-  
-        // Call the onSaveReminder with the updated reminder
-        // console.log("reminder id from add ",savedReminder)
-        refreshReminders();
-        onSaveReminder(savedReminder);
-       
-        setModalVisible(false); // Close the modal
         Alert.alert('Success', 'Reminder added successfully!');
       } else {
-        const error = await response.json();
-        console.error('Error saving reminder:', error);
         Alert.alert('Error', 'Failed to add reminder. Please try again.');
       }
     } catch (error) {
       console.error('Error saving reminder:', error);
-      Alert.alert('Error', 'An error occurred. Please try again later.');
+      Alert.alert('Error', 'An error occurred while saving the reminder.');
     }
   };
-  
-  
-
-  const handleAddressSelect = (data: any, details: any) => {
-    if (details && details.geometry && details.geometry.location) {
-      const fullAddress = data.description || '';
-      const lat = details.geometry.location.lat;
-      const lng = details.geometry.location.lng;
-  
-      setAddress(fullAddress);
-      setLatitude(lat);
-      setLongitude(lng);
-  
-      //console.log('Selected Address:', fullAddress, 'Latitude:', lat, 'Longitude:', lng);
-    } else {
-      console.error('Error: Invalid address details.');
-      Alert.alert('Error', 'Unable to fetch address details. Please try again.');
-    }
-  };
-  
 
   return (
     <Modal
@@ -151,8 +161,6 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
                   textInput: styles.input,
                 }}
               />
-              <Text>Time:</Text>
-              <TextInput style={styles.input} value={Time} onChangeText={setTime} />
               <Text>Reminder details:</Text>
               <TextInput style={[styles.input, styles.largeInput]} value={details} onChangeText={setDetails} multiline />
             </>
