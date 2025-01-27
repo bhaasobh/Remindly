@@ -146,10 +146,65 @@ export default function TabTwoScreen() {
     }
   };
 
+  const handleUpdatePersonalItem = (updatedPersonalItem: {
+    _id: string;
+    itemName: string;
+  }) => {
+    fetch(`${config.SERVER_API}/personal-list/${updatedPersonalItem._id}`, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(updatedPersonalItem),
+})
+  .then((res) => {
+    console.log('Response Status:', res.status);
+    return res.json().then((data) => ({ ok: res.ok, data }));
+  })
+  .then(({ ok, data }) => {
+    if (ok) {
+      setPersonalList((prev) =>
+        prev.map((item) =>
+          item._id === updatedPersonalItem._id ? updatedPersonalItem : item
+        )
+      );
+    } else {
+      console.error('Server Error:', data.error || 'Unknown error');
+      Alert.alert('Error', data.error || 'Failed to update the personal item.');
+    }
+  })
+  .catch((err) => {
+    console.error('Failed to update personal item:', err);
+  });
+
+  };
+  
+  const handleUpdateItem = (updatedItem: {
+    _id: string;
+    itemName: string;
+    qty: number;
+    days: number;
+  }) => {
+    fetch(`${config.SERVER_API}/shopping-list/${updatedItem._id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedItem),
+    })
+      .then((res) => {
+        if (res.ok) {
+          setShoppingList((prev) =>
+            prev.map((item) => (item._id === updatedItem._id ? updatedItem : item))
+          );
+        } else {
+          Alert.alert('Error', 'Failed to update the item.');
+        }
+      })
+      .catch((err) => console.error('Failed to update item:', err));
+  };
+
+
   // Remove item from shopping list
   const handleRemoveShoppingItem = async (id: string) => {
     try {
-      const response = await fetch(`${config.SERVER_API}/personal-items/${id}`, {
+      const response = await fetch(`${config.SERVER_API}/shopping-list/${userId}/${id}`, {
         method: 'DELETE',
       });
 
@@ -204,18 +259,20 @@ export default function TabTwoScreen() {
         </TouchableOpacity>
       </View>
       {isShoppingList ? (
-        <ShoppingList
-          items={shoppingList}
-          onAddItem={() => setModalVisible(true)}
-          onRemoveAll={() => setShoppingList([])}
-          onRemoveItem={handleRemoveShoppingItem}
-        />
+         <ShoppingList
+         items={shoppingList}
+         onAddItem={() => setModalVisible(true)}
+         onRemoveAll={() => setShoppingList([])}
+         onRemoveItem={handleRemoveShoppingItem}
+         onUpdateItem={handleUpdateItem}
+       />
       ) : (
         <PersonalList
           items={personalList}
           onAddItem={() => setModalVisible(true)}
           onRemoveAll={() => setPersonalList([])}
           onRemoveItem={handleRemovePersonalItem}
+          onUpdateItem={handleUpdatePersonalItem}
         />
       )}
       <ItemInputModal
