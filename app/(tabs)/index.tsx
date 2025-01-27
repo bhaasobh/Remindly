@@ -4,57 +4,48 @@ import Entypo from '@expo/vector-icons/Entypo';
 import MapComponent from '@/components/MapComponent';
 import Header from '../../components/Header';
 import AddReminderModal from '@/components/AddReminderModal'; 
-import ReminderDetails from '@/components/ReminderDetails';
+import TimeReminderComponent from '@/components/TimeReminderComponent'; // Import the TimeReminderComponent
+import RemindersList from '@/components/RemindersList'; 
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const BOX_HEIGHT = 300;
 const MAX_HEIGHT = SCREEN_HEIGHT * 0.8;
 const MIN_HEIGHT = 300;
 
-interface Reminder {
-  id: string;  // Ensure `id` matches `Home.tsx`
+type Reminder = {
+  id: string;
   title: string;
-  latitude: number;
-  longitude: number;
+  details: string;
   address: string;
-  text: string;
-}
-
-
+  reminderType: 'location' | 'time';
+  Time: string;
+  lat: number;
+  lng: number;
+};
 
 const Home: React.FC = () => {
-  const [reminders, setReminders] = useState<Reminder[]>([]);
-
-
+  const [locationReminders, setLocationReminders] = useState<Reminder[]>([]);
   const [boxHeight, setBoxHeight] = useState(BOX_HEIGHT);
-  const [icon, setIcon] = useState('^');
   const [toggleUp, setToggleUp] = useState(true);
-  const [selectedReminder, setSelectedReminder] = useState<any>(null); 
+  const [selectedReminder, setSelectedReminder] = useState<Reminder | null>(null);
   const heightAnim = useRef(new Animated.Value(BOX_HEIGHT)).current;
   const [isModalVisible, setModalVisible] = useState(false);
-
-  const [timeReminders, setTimeReminders] = useState<any[]>([]);
-  const [locationReminders, setLocationReminders] = useState<any[]>([]);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [filterType, setFilterType] = useState<'all' | 'location' | 'time'>('all');
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
   };
 
-  const saveReminder = (reminder: any) => {
-    if (reminder.reminderType === 'time') {
-      setTimeReminders([...timeReminders, reminder]);
-    } else {
-      setLocationReminders([...locationReminders, reminder]);
-    }
-    setModalVisible(false); 
+  const saveReminder = (reminder: Reminder) => {
+    setLocationReminders([...locationReminders, reminder]);
+    setModalVisible(false);
   };
 
-
   const toggleHeight = () => {
-    setToggleUp(!toggleUp);
-    const newHeight = icon === '^' ? Math.min(boxHeight + 500, MAX_HEIGHT) : Math.max(boxHeight - 500, MIN_HEIGHT);
+    const newHeight = toggleUp ? Math.min(boxHeight + 500, MAX_HEIGHT) : Math.max(boxHeight - 500, MIN_HEIGHT);
     setBoxHeight(newHeight);
-    setIcon(icon === '^' ? 'v' : '^');
+    setToggleUp(!toggleUp);
 
     Animated.timing(heightAnim, {
       toValue: newHeight,
@@ -63,27 +54,10 @@ const Home: React.FC = () => {
     }).start();
   };
 
-  const handleReminderClick = (reminderId: string) => {
-    const reminder = reminders.find((reminder) => reminder.id === reminderId);
-    if (reminder) {
-      setSelectedReminder(reminder);
-    }
-  };
-
-  const renderBoxes = () => {
-    return reminders.map((reminder) => (
-      <TouchableOpacity key={reminder.id} onPress={() => handleReminderClick(reminder.id)}>
-        <View style={styles.boxesContainer}>
-          <Text style={styles.boxText}>{reminder.title}</Text>
-        </View>
-      </TouchableOpacity>
-    ));
-  };
-
   return (
     <View style={styles.container}>
       <Header />
-      <MapComponent reminders={reminders} />
+      <MapComponent  />
       <Animated.View style={[styles.slideUpBox, { height: heightAnim }]}>
         <View style={styles.handle}>
           <TouchableOpacity onPress={toggleHeight}>
@@ -92,29 +66,32 @@ const Home: React.FC = () => {
         </View>
         <View style={styles.SlidBoxTitleContainer}>
           <Text style={styles.reminderText}>All Reminders</Text>
-          <View style={styles.AddIconPlace}>
+          <TouchableOpacity style={styles.AddIconPlace}  onPress={toggleModal}
+          >
             <Entypo
               style={styles.addTasIcons}
-              onPress={toggleModal}
               name="add-to-list"
+              onPress={toggleModal}
               size={24}
               color="#DF6316"
             />
-          </View>
+          </TouchableOpacity>
         </View>
-        <ScrollView>{renderBoxes()}</ScrollView>
+        <ScrollView>
+          <RemindersList/>
+        </ScrollView>
       </Animated.View>
       <AddReminderModal
         modalVisible={isModalVisible}
         setModalVisible={setModalVisible}
         onSaveReminder={saveReminder}
       />
-      <Modal visible={selectedReminder !== null} animationType="slide" transparent={true}>
-        <ReminderDetails
-          reminder={selectedReminder!}
-          onClose={() => setSelectedReminder(null)} 
-        />
-      </Modal>
+      {selectedReminder && (
+        <Modal visible={true} animationType="slide" transparent={true}>
+        </Modal>
+      )}
+      <TimeReminderComponent/>
+
     </View>
   );
 };
@@ -147,8 +124,9 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   boxesContainer: {
-    width: 423,
+    width: Dimensions.get('window').width * 0.9,
     height: 50,
+    left:10,
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#D3D3D3',
@@ -156,12 +134,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
-    left: -20,
-    top: -10,
   },
   addTasIcons: {
-    top: -25,
-    right: -95,
+    top: 0,
+    right: 0,
+    paddingBottom:15,
   },
   boxText: {
     color: '#000',
@@ -170,20 +147,23 @@ const styles = StyleSheet.create({
   reminderText: {
     fontSize: 22,
     color: '#DF6316',
-    right: 245,
-    position: 'relative',
+    marginRight: 'auto',
+    paddingBottom:15,
+    position:'relative',
+    marginBottom:22,
   },
   SlidBoxTitleContainer: {
-    justifyContent: 'space-evenly',
-    alignItems: 'flex-end',
-    marginTop: 10,
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 15,
     marginBottom: -25,
   },
   AddIconPlace: {
     borderRadius: 2.5,
-    right: 110,
-    top: -10,
-    marginVertical: 10,
+    left:-10,
+    top:-8,
+    position:'relative',
   },
   modalOverlay: {
     flex: 1,
@@ -206,18 +186,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
     color: '#DF6316',
-    top:-66,
-    left:295,
-    position:'absolute',
+    top: -66,
+    left: 295,
+    position: 'absolute',
   },
   modalTitle: {
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 10,
     color: '#DF6316',
-    top:20,
-    left:50,
-    position:'absolute',
+    top: 20,
+    left: 50,
+    position: 'absolute',
   },
   saveButton: {
     backgroundColor: '#DF6316',
@@ -227,9 +207,9 @@ const styles = StyleSheet.create({
     marginTop: 20,
     width: 220,
     height: 50,
-    top:505,
-    left:63,
-    position:'absolute',
+    top: 505,
+    left: 63,
+    position: 'absolute',
   },
   saveButtonText: {
     color: '#fff',

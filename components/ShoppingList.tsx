@@ -123,6 +123,7 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({
                   )
                 }
               >
+              <TouchableOpacity onPress={() => onRemoveItem(item._id)}>
                 <Entypo name="trash" size={20} color="#ff0000" />
               </TouchableOpacity>
             </View>
@@ -167,6 +168,7 @@ const styles = StyleSheet.create({
   itemActions: { flexDirection: 'row', gap: 10 },
   emptyText: { textAlign: 'center', marginTop: 50, fontSize: 18, color: '#888' },
   actionButtons: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 20, bottom:80},
+
   addButton: { backgroundColor: '#DF6316', paddingVertical: 15, paddingHorizontal: 20, borderRadius: 5 },
   addButtonText: { color: '#fff', fontSize: 18 },
   deleteButton: { backgroundColor: '#FF4C4C', paddingVertical: 15, paddingHorizontal: 20, borderRadius: 5 },
@@ -220,3 +222,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+

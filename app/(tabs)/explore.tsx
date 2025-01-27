@@ -145,7 +145,6 @@ export default function TabTwoScreen() {
       Alert.alert('Error', 'Failed to save the shopping item.');
     }
   };
-
   const handleUpdatePersonalItem = (updatedPersonalItem: {
     _id: string;
     itemName: string;
@@ -177,6 +176,7 @@ export default function TabTwoScreen() {
 
   };
   
+
   const handleUpdateItem = (updatedItem: {
     _id: string;
     itemName: string;
