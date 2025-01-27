@@ -146,6 +146,30 @@ export default function TabTwoScreen() {
     }
   };
 
+  const handleUpdateItem = (updatedItem: {
+    _id: string;
+    itemName: string;
+    qty: number;
+    days: number;
+  }) => {
+    fetch(`${config.SERVER_API}/shopping-list/${updatedItem._id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedItem),
+    })
+      .then((res) => {
+        if (res.ok) {
+          setShoppingList((prev) =>
+            prev.map((item) => (item._id === updatedItem._id ? updatedItem : item))
+          );
+        } else {
+          Alert.alert('Error', 'Failed to update the item.');
+        }
+      })
+      .catch((err) => console.error('Failed to update item:', err));
+  };
+
+
   // Remove item from shopping list
   const handleRemoveShoppingItem = async (id: string) => {
     try {
@@ -204,12 +228,13 @@ export default function TabTwoScreen() {
         </TouchableOpacity>
       </View>
       {isShoppingList ? (
-        <ShoppingList
-          items={shoppingList}
-          onAddItem={() => setModalVisible(true)}
-          onRemoveAll={() => setShoppingList([])}
-          onRemoveItem={handleRemoveShoppingItem}
-        />
+         <ShoppingList
+         items={shoppingList}
+         onAddItem={() => setModalVisible(true)}
+         onRemoveAll={() => setShoppingList([])}
+         onRemoveItem={handleRemoveShoppingItem}
+         onUpdateItem={handleUpdateItem}
+       />
       ) : (
         <PersonalList
           items={personalList}
