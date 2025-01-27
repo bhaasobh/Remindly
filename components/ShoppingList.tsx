@@ -111,6 +111,18 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({
               <TouchableOpacity onPress={() => handleEdit(item)}>
                 <MaterialIcons name="edit" size={24} color="#DF6316" />
               </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() =>
+                  Alert.alert(
+                    'Delete Item',
+                    `Are you sure you want to delete "${item.itemName}"?`,
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      { text: 'Yes', onPress: () => onRemoveItem(item._id) },
+                    ]
+                  )
+                }
+              >
               <TouchableOpacity onPress={() => onRemoveItem(item._id)}>
                 <Entypo name="trash" size={20} color="#ff0000" />
               </TouchableOpacity>
@@ -155,7 +167,8 @@ const styles = StyleSheet.create({
   itemText: { fontSize: 18 },
   itemActions: { flexDirection: 'row', gap: 10 },
   emptyText: { textAlign: 'center', marginTop: 50, fontSize: 18, color: '#888' },
-  actionButtons: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 },
+  actionButtons: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 20, bottom:80},
+
   addButton: { backgroundColor: '#DF6316', paddingVertical: 15, paddingHorizontal: 20, borderRadius: 5 },
   addButtonText: { color: '#fff', fontSize: 18 },
   deleteButton: { backgroundColor: '#FF4C4C', paddingVertical: 15, paddingHorizontal: 20, borderRadius: 5 },
@@ -209,3 +222,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+

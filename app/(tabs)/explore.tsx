@@ -145,6 +145,37 @@ export default function TabTwoScreen() {
       Alert.alert('Error', 'Failed to save the shopping item.');
     }
   };
+  const handleUpdatePersonalItem = (updatedPersonalItem: {
+    _id: string;
+    itemName: string;
+  }) => {
+    fetch(`${config.SERVER_API}/personal-list/${updatedPersonalItem._id}`, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(updatedPersonalItem),
+})
+  .then((res) => {
+    console.log('Response Status:', res.status);
+    return res.json().then((data) => ({ ok: res.ok, data }));
+  })
+  .then(({ ok, data }) => {
+    if (ok) {
+      setPersonalList((prev) =>
+        prev.map((item) =>
+          item._id === updatedPersonalItem._id ? updatedPersonalItem : item
+        )
+      );
+    } else {
+      console.error('Server Error:', data.error || 'Unknown error');
+      Alert.alert('Error', data.error || 'Failed to update the personal item.');
+    }
+  })
+  .catch((err) => {
+    console.error('Failed to update personal item:', err);
+  });
+
+  };
+  
 
   const handleUpdateItem = (updatedItem: {
     _id: string;
@@ -173,7 +204,7 @@ export default function TabTwoScreen() {
   // Remove item from shopping list
   const handleRemoveShoppingItem = async (id: string) => {
     try {
-      const response = await fetch(`${config.SERVER_API}/personal-items/${id}`, {
+      const response = await fetch(`${config.SERVER_API}/shopping-list/${userId}/${id}`, {
         method: 'DELETE',
       });
 
@@ -241,6 +272,7 @@ export default function TabTwoScreen() {
           onAddItem={() => setModalVisible(true)}
           onRemoveAll={() => setPersonalList([])}
           onRemoveItem={handleRemovePersonalItem}
+          onUpdateItem={handleUpdatePersonalItem}
         />
       )}
       <ItemInputModal

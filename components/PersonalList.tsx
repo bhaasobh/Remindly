@@ -1,12 +1,13 @@
-import React from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from "react-native";
-import { Entypo } from "@expo/vector-icons";
+import React, { useState } from "react";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Modal, TextInput, Pressable } from "react-native";
+import { Entypo, MaterialIcons } from "@expo/vector-icons";
 
 interface PersonalListProps {
-  items: { _id: string; itemName: string }[]; // Ensure items have a unique 'id'
+  items: { _id: string; itemName: string }[]; // Ensure items have a unique '_id'
   onAddItem: () => void;
   onRemoveAll: () => void;
   onRemoveItem: (id: string) => void;
+  onUpdateItem: (updatedItem: { _id: string; itemName: string }) => void;
 }
 
 export const PersonalList: React.FC<PersonalListProps> = ({
@@ -14,17 +15,84 @@ export const PersonalList: React.FC<PersonalListProps> = ({
   onAddItem,
   onRemoveAll,
   onRemoveItem,
+  onUpdateItem,
 }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingItem, setEditingItem] = useState<{ _id: string; itemName: string } | null>(null);
+
+  // Handle editing an item
+  const handleEdit = (item: { _id: string; itemName: string }) => {
+    setEditingItem(item);
+    setIsEditing(true);
+  };
+
+  // Save the edited item
+  const handleSaveEdit = () => {
+    if (editingItem) {
+      onUpdateItem(editingItem);
+      setEditingItem(null);
+      setIsEditing(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
+      {/* Modal for Editing Items */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isEditing}
+        onRequestClose={() => {
+          setIsEditing(false);
+        }}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>Edit Item</Text>
+            <TextInput
+              placeholder="Enter item name"
+              style={styles.input}
+              value={editingItem?.itemName || ""}
+              onChangeText={(text) =>
+                setEditingItem((prev) => (prev ? { ...prev, itemName: text } : null))
+              }
+            />
+
+            <Pressable style={[styles.button, styles.buttonSave]} onPress={handleSaveEdit}>
+              <Text style={styles.textStyle}>Save</Text>
+            </Pressable>
+            <Pressable style={[styles.button, styles.buttonClose]} onPress={() => setIsEditing(false)}>
+              <Text style={styles.textStyle}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Personal List */}
       <FlatList
         data={items}
         renderItem={({ item }) => (
           <View style={styles.itemContainer}>
             <Text style={styles.itemText}>{item.itemName}</Text>
-            <TouchableOpacity onPress={() => onRemoveItem(item._id)}>
-              <Entypo name="trash" size={20} color="#DF6316" />
-            </TouchableOpacity>
+            <View style={styles.itemActions}>
+              <TouchableOpacity onPress={() => handleEdit(item)}>
+                <MaterialIcons name="edit" size={24} color="#DF6316" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() =>
+                  Alert.alert(
+                    "Delete Item",
+                    `Are you sure you want to delete "${item.itemName}"?`,
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      { text: "Yes", onPress: () => onRemoveItem(item._id) },
+                    ]
+                  )
+                }
+              >
+                <Entypo name="trash" size={20} color="#ff0000" />
+              </TouchableOpacity>
+            </View>
           </View>
         )}
         keyExtractor={(item) => item._id} // Unique key for each item
@@ -66,6 +134,10 @@ const styles = StyleSheet.create({
   itemText: {
     fontSize: 18,
   },
+  itemActions: {
+    flexDirection: "row",
+    gap: 10,
+  },
   emptyText: {
     textAlign: "center",
     marginTop: 50,
@@ -97,5 +169,52 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: "#fff",
     fontSize: 18,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  input: {
+    width: 200,
+    height: 40,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 8,
+    marginBottom: 15,
+  },
+  button: {
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+  },
+  buttonSave: { backgroundColor: "#4CAF50" },
+  buttonClose: { backgroundColor: "#FF4C4C" },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: "center",
+    fontSize: 18,
+    fontWeight: "bold",
   },
 });
