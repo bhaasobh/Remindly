@@ -170,16 +170,62 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ modalVisible, setMo
               </TouchableOpacity>
 
               {showDatePicker && (
-                <DateTimePicker
-                  value={date}
-                  mode="date"
-                  display="calendar"
-                  onChange={(event, selectedDate) => {
-                    setShowDatePicker(false);
-                    setDate(selectedDate || date);
-                  }}
-                />
-              )}
+  <Modal
+    transparent={true}
+    animationType="slide"
+    onRequestClose={() => setShowDatePicker(false)}
+  >
+    <View style={styles.datePickerModal}>
+      <View style={styles.datePickerContainer}>
+        {/* Date Picker */}
+        <Text style={styles.datePickerLabel}>Select Date</Text>
+        <DateTimePicker
+          value={date}
+          mode="date"
+          display="spinner"
+          textColor="#000" // Custom text color (iOS only)
+          onChange={(event, selectedDate) => {
+            if (event.type !== 'dismissed') {
+              setDate(selectedDate || date); // Update the selected date
+            }
+          }}
+        />
+
+        {/* Time Picker */}
+        <Text style={styles.datePickerLabel}>Select Time</Text>
+        <DateTimePicker
+  value={date}
+  mode="time"
+  display="spinner"
+  textColor="#000" // Custom text color (iOS only)
+  onChange={(event, selectedDate) => {
+    if (event.type !== 'dismissed') {
+      const updatedDate = selectedDate || date;
+      setDate(updatedDate); // Update the complete date object
+      const formattedTime = updatedDate.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      setTime(formattedTime); // Update the time state as a formatted string
+    }
+  }}
+/>
+
+
+        {/* Done Button */}
+        <TouchableOpacity
+          onPress={() => setShowDatePicker(false)}
+          style={styles.datePickerCloseButton}
+        >
+          <Text style={styles.datePickerCloseText}>Done</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </Modal>
+)}
+
+
+
 
               <Text>Time:</Text>
               <TextInput style={styles.input} value={Time} onChangeText={setTime} />
@@ -226,6 +272,38 @@ const styles = StyleSheet.create({
     top: -56,
     left: 295,
   },
+  datePickerModal: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+  },
+  datePickerContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    width: '90%',
+    alignItems: 'center',
+  },
+  datePickerLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  datePickerCloseButton: {
+    marginTop: 20,
+    backgroundColor: '#DF6316',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    width: '50%',
+  },
+  datePickerCloseText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+
   modalTitle: {
     fontSize: 22,
     fontWeight: 'bold',

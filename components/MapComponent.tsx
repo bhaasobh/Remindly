@@ -11,6 +11,7 @@ const MapComponent = () => {
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   });
+  const triggeredReminders = new Set<string>();
 
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
   const { reminders, fetchReminders, refreshKey } = useLogin(); // Access refreshKey from context
@@ -19,11 +20,9 @@ const MapComponent = () => {
 
   if(refresh)
   {
-   // console.log("set refreshingg");
     setrefresh(false);
     fetchReminders();
   }
-  // Fetch user location on mount
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -74,12 +73,16 @@ const MapComponent = () => {
 
   useEffect(() => {
     reminders.forEach((reminder) => {
-      if (isWithinRadius(reminder.lat, reminder.lng)) {
-        Alert.alert('Reminder', `You are ner the reminder ${reminder.title}\nremember to ${reminder.details}`);     
+      if (isWithinRadius(reminder.lat, reminder.lng) && !triggeredReminders.has(reminder.title)) {
+        Alert.alert('Reminder', `You are near the reminder ${reminder.title}\nremember to ${reminder.details}`);
+        triggeredReminders.add(reminder.title);     
       }
+
     });
+    console.log(triggeredReminders);
+
   }, [userLocation, reminders]);
- 
+
     
   // Fetch reminders when refreshKey changes
   useEffect(() => {
@@ -92,7 +95,6 @@ const MapComponent = () => {
   return (
     <View style={styles.MapContainer}>
       <MapView   style={styles.map} region={mapRegion}>
-        {/* User's current location */}
         {userLocation && (
           <Marker
             coordinate={{
@@ -104,10 +106,7 @@ const MapComponent = () => {
           />
         )}
 
-        {/* Render reminders */}
         {reminders.map((reminder, index) => (
-         // console.log('reminder marker \n',reminder),
-         // console.log('reminder address \n',reminder.lat),
           reminder.lat !== undefined &&
           reminder.lng !== undefined && (
             <React.Fragment key={reminder.id || index}>
