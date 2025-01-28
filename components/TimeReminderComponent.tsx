@@ -54,7 +54,6 @@ const TimeReminderComponent: React.FC = () => {
 
       const timeDifference = reminderTime.getTime() - currentTime.getTime();
       const oneHourInMillis = 60 * 60 * 1000;
-      console.log(triggeredReminders);
 
       if (timeDifference > 0 && timeDifference <= oneHourInMillis) {
         const isSameDay = currentTime.toDateString() === reminderTime.toDateString();
