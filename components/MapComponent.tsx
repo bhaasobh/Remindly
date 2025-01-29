@@ -1,10 +1,14 @@
+
 import React, { useEffect, useState,useRef } from "react";
+
 import { StyleSheet, View, Alert, Button, TouchableOpacity } from "react-native";
 import MapView, { Marker, Circle } from "react-native-maps";
 import * as Location from "expo-location";
 import { useLogin } from "../app/auth/LoginContext";
+
 import config from "@/config";
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+
 
 const MapComponent = () => {
   type Reminder = {
@@ -12,7 +16,9 @@ const MapComponent = () => {
     title: string;
     details: string;
     address: string;
+
     reminderType: 'location';
+
     lat: number;
     lng: number;
   };
@@ -33,26 +39,29 @@ const MapComponent = () => {
     };
   };
 
-
   const triggeredReminders = useRef(new Set<string>());
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
   const {userId, reminders, fetchReminders, refreshKey } = useLogin(); // Access refreshKey from context
   const [mapKey, setMapKey] = useState(0);
+
   const [refresh, setrefresh] = useState(false); 
+
   const [nearbyMarkets, setNearbyMarkets] = useState<Market[]>([])
   const [showMarkets, setShowMarkets] = useState(false);
    const [locationReminders, setLocationReminders] = useState<Reminder[]>([]);
    const [selectedMarket, setSelectedMarket] = useState<{ lat: number; lng: number } | null>(null);
 
+
    const [userAddress, setUserAddress] = useState<{ HouseLatitude: number; HouseLongitude: number } | null>(null);
    const [leftHouse, setLeftHouse] = useState(false); // New state for tracking if the user left their house
 
 
-  if(refresh)
-  {
-    setrefresh(false);
+
+  if (refresh) {
+    setRefresh(false);
     fetchReminders();
   }
+
   const fetchUserAddress = async () => {
     try {
       const response = await fetch(`${config.SERVER_API}/users/${userId}`); // Modify with the actual URL
@@ -68,6 +77,7 @@ const MapComponent = () => {
     }
   };
   
+
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
   
@@ -77,6 +87,9 @@ const MapComponent = () => {
         subscription = await Location.watchPositionAsync(
           {
             accuracy: Location.Accuracy.High,
+
+            timeInterval: 5000, // Update location every 5 seconds
+
             distanceInterval: 10, // Update when moving 10 meters
           },
           (location) => {
@@ -87,6 +100,7 @@ const MapComponent = () => {
               latitudeDelta: 0.01,
               longitudeDelta: 0.01,
             });
+
 
             if (userAddress) {
               const distanceToHome = getDistance(
@@ -99,6 +113,7 @@ const MapComponent = () => {
                   setLeftHouse(false);
               }
             }
+
           }
         );
       } else {
@@ -111,12 +126,14 @@ const MapComponent = () => {
         subscription.remove();
       }
     };
+
   }, [userLocation, userAddress, leftHouse]);
 
   
   const handleMarketPress = (lat: number, lng: number) => {
     setSelectedMarket({ lat, lng }); 
   };
+
   const fetchNearbyMarkets = async () => {
     if (!userLocation) {
       Alert.alert("Error", "User location not found");
@@ -126,7 +143,9 @@ const MapComponent = () => {
    
     const { latitude, longitude } = userLocation.coords;
     
+
     const placesUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=2000&type=store&key=${config.GOOGLE_API}`;
+
 
     try {
       const response = await fetch(placesUrl);
@@ -134,9 +153,11 @@ const MapComponent = () => {
 
       if (data.results) {
         setNearbyMarkets(data.results);
+
         setShowMarkets(!showMarkets);
       } else {
         Alert.alert("No Markets Found", "Try again later.");
+
       }
     } catch (error) {
       console.error(error);
@@ -144,14 +165,13 @@ const MapComponent = () => {
     }
   };
 
-
   const isWithinRadius = (reminderLat: number, reminderLong: number) => {
     if (userLocation) {
       const distance = getDistance(
         { latitude: userLocation.coords.latitude, longitude: userLocation.coords.longitude },
         { latitude: reminderLat, longitude: reminderLong }
       );
-      return distance <= 200; 
+      return distance <= 200;
     }
     return false;
   };
@@ -171,14 +191,16 @@ const MapComponent = () => {
       Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
       Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c * 1000; 
+    const distance = R * c * 1000;
 
     return distance;
   };
 
   useEffect(() => {
+    console.log("refresh2");
     reminders.forEach((reminder) => {
       if (isWithinRadius(reminder.lat, reminder.lng) && !triggeredReminders.current.has(reminder.title)) {
+
         Alert.alert('Reminder', `You are near the reminder ${reminder.title}\nremember to ${reminder.details}`);
         triggeredReminders.current.add(reminder.title);     
       }
@@ -212,6 +234,7 @@ const MapComponent = () => {
   
   
   const mapRef = useRef<MapView | null>(null);
+
   const recenterMap = () => {
     if (userLocation && mapRef.current) {
       mapRef.current.animateToRegion(
@@ -225,9 +248,11 @@ const MapComponent = () => {
       );
     }
   };
+
   
   return (
      <View style={styles.MapContainer}>
+
       {/* ✅ Added ref={mapRef} to MapView */}
       <MapView ref={mapRef} style={styles.map} region={mapRegion}>
         {userLocation && (
@@ -240,6 +265,7 @@ const MapComponent = () => {
             title="Your Location"
           />
         )}
+
 
         {/* Render reminders */}
         {reminders.map((reminder, index) => (
@@ -261,6 +287,7 @@ const MapComponent = () => {
             </React.Fragment>
           )
         ))}
+
         {/* ✅ Display Nearby Markets */}
         {showMarkets &&
           nearbyMarkets.map((market, index) => (
@@ -277,6 +304,7 @@ const MapComponent = () => {
             
           ))
           }
+
           {userAddress && (
         <React.Fragment key="userHome">
         <Marker
@@ -303,6 +331,7 @@ const MapComponent = () => {
           )}
 
       </MapView>
+
       <FontAwesome6 name="location-crosshairs" size={24} color="black" />
 
       <TouchableOpacity onPress={recenterMap} style={styles.recenterButtonContainer}>
@@ -311,9 +340,11 @@ const MapComponent = () => {
       <TouchableOpacity onPress={fetchNearbyMarkets} style={styles.marketButtonContainer}>
         <FontAwesome6 name="store" size={24} color="black" />
       </TouchableOpacity>
+
       <TouchableOpacity onPress={recenterToHouse} style={styles.houseButtonContainer}>
   <FontAwesome6 name="house" size={24} color="black" />
 </TouchableOpacity>
+
 
     </View>
   );
@@ -324,7 +355,7 @@ const styles = StyleSheet.create({
   MapContainer: {
     flex: 1,
     width: "100%",
-    height: "10%",
+    height: "100%",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -366,6 +397,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
   },
+
   houseButtonContainer: {
     position: "absolute",
     top: 140,
