@@ -58,7 +58,7 @@ const MapComponent = () => {
 
 
   if (refresh) {
-    setRefresh(false);
+    setrefresh(false);
     fetchReminders();
   }
 
