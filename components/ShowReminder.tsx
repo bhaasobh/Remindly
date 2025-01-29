@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Linking } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import ReminderDetails from './ReminderDetails'; 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import config from '@/config';
 import { useLogin } from '@/app/auth/LoginContext';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 type Reminder = {
   id: string;
@@ -43,33 +44,66 @@ const ShowReminder: React.FC<ShowReminderProps> = ({ reminder, onClose, onDelete
   const handleCloseEdit = () => {
     setIsEditing(false); 
   };
-
+  const handleNavigateToWaze = () => {
+    if (!reminder?.address) {
+      Alert.alert('Error', 'No address found for this reminder');
+      return;
+    }
+  
+    const { lat, lng } = reminder.address;
+    const wazeUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+  
+    Linking.openURL(wazeUrl).catch((err) => {
+      console.error('Failed to open Waze:', err);
+      Alert.alert('Error', 'Unable to open Waze. Please try again.');
+    });
+  };
+  
   const modalHeight = reminder.reminderType === 'time' ? 300 : 340; 
   const deleteReminder = async (id: string, reminder: Reminder) => {
-    const url =
-      reminder.reminderType === 'location'
-        ? `${config.SERVER_API}/location-reminders/${id}`
-        : `${config.SERVER_API}/time-reminders/${id}`;
-
-    try {
-      const response = await fetch(url, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
+    Alert.alert(
+      'Confirm Deletion',
+      'Are you sure you want to delete this reminder?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
         },
-      });
+        {
+          text: 'Yes',
+          onPress: async () => {
+            const url =
+              reminder.reminderType === 'location'
+                ? `${config.SERVER_API}/location-reminders/${id}`
+                : `${config.SERVER_API}/time-reminders/${id}`;
+  
+            try {
+              const response = await fetch(url, {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+              });
+  
+              if (response.ok) {
+                Alert.alert('Success', 'Reminder deleted successfully');
+                if(reminder.reminderType === 'location')
+                  refreshReminders();
 
-      if (response.ok) {
-        Alert.alert('Success','Reminder deleted successfully');
-        onDelete(id);
-        refreshReminders();
-      } else {
-        console.error('Failed to delete reminder');
-      }
-    } catch (error) {
-      console.error('Error deleting reminder:', error);
-    }
+                onDelete(id);
+              } else {
+                console.error('Failed to delete reminder');
+              }
+            } catch (error) {
+              console.error('Error deleting reminder:', error);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
+  
 
   return (
     <View style={styles.modalOverlay}>
@@ -94,23 +128,29 @@ const ShowReminder: React.FC<ShowReminderProps> = ({ reminder, onClose, onDelete
               </>
             )}
 
-            {reminder.reminderType === 'time' && (
+           {reminder.reminderType === 'time' && (
               <>
-                <Text style={styles.InfoTitle}>Time:</Text>
-                <Text>{reminder.Time}</Text>
+                 <Text style={styles.InfoTitle}>Date:                 Time:</Text>
+                 <Text>{new Date(reminder.Time).toLocaleDateString('en-GB')}     {new Date(reminder.Time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</Text>
               </>
             )}
 
+
             <Text style={styles.InfoTitle}>Details:</Text>
             <Text>{reminder.details}</Text>
-
+            
             <View style={styles.actionButtons}>
               <TouchableOpacity onPress={onClose} style={styles.closeButtonContainer}>
                 <Text style={styles.closeButton}>Close</Text>
               </TouchableOpacity>
+              <TouchableOpacity onPress={handleNavigateToWaze} style={styles.wazeButton}>
+  <FontAwesome5 name="waze" size={24} color="black" />
+</TouchableOpacity>
+
               <TouchableOpacity onPress={handleEdit} style={styles.editButton}>
                 <MaterialIcons name="edit" size={24} color="black" />
               </TouchableOpacity>
+               
               <TouchableOpacity onPress={() => deleteReminder(reminder.id, reminder)} style={styles.deleteButton}>
                 <FontAwesome name="trash" size={24} color="red" />
               </TouchableOpacity>
@@ -166,7 +206,12 @@ const styles = StyleSheet.create({
   editButton: {
     padding: 10,
     borderRadius: 5,
-    left: 73,
+    left: 40,
+  },
+  wazeButton: {
+    padding: 10,
+    borderRadius: 5,
+    left: 70,
   },
   deleteButton: {
     padding: 10,

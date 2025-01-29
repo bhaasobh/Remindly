@@ -18,6 +18,7 @@ interface Reminder {
 const TimeReminderComponent: React.FC = () => {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const { userId } = useLogin();
+  const triggeredReminders = new Set<string>();
 
   const fetchReminders = useCallback(async () => {
     try {
@@ -45,7 +46,7 @@ const TimeReminderComponent: React.FC = () => {
     const currentTime = new Date();
 
     reminders.forEach(reminder => {
-      const reminderTime = new Date(reminder.Time); 
+      const reminderTime = new Date(reminder.Time);
       if (isNaN(reminderTime.getTime())) {
         console.error('Invalid reminder time:', reminder.Time);
         return;
@@ -53,21 +54,19 @@ const TimeReminderComponent: React.FC = () => {
 
       const timeDifference = reminderTime.getTime() - currentTime.getTime();
       const oneHourInMillis = 60 * 60 * 1000;
-
-      console.log('Current time:', currentTime);
-      console.log('Reminder time:', reminderTime);
-      console.log('Time difference:', timeDifference);
+      console.log(triggeredReminders);
 
       if (timeDifference > 0 && timeDifference <= oneHourInMillis) {
         const isSameDay = currentTime.toDateString() === reminderTime.toDateString();
 
-        console.log('Is same day:', isSameDay);
-
-        if (isSameDay) {
+        if (isSameDay && !triggeredReminders.has(reminder.title)) {
           Alert.alert('Reminder Alert', `Your reminder "${reminder.title}" is in 1 hour!`);
+          triggeredReminders.add(reminder.title); // Mark reminder as triggered
         }
       }
     });
+    console.log(triggeredReminders);
+
   };
 
   useEffect(() => {
@@ -75,7 +74,7 @@ const TimeReminderComponent: React.FC = () => {
 
     const interval = setInterval(() => {
       fetchReminders(); 
-    }, 30000); 
+    }, 60000); 
 
     return () => clearInterval(interval);
   }, [fetchReminders]);
