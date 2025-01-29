@@ -44,9 +44,7 @@ const App = () => {
         data.locations.forEach((location: { name: string }) => {
           Alert.alert('Nearby Location', `You are near ${location.name}.`);
         });
-      } else {
-        console.log('No nearby locations.');
-      }
+      } 
     } catch (error) {
       console.error('Error checking proximity:', error);
     }

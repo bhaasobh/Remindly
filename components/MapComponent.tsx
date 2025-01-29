@@ -1,11 +1,13 @@
-import React, { useEffect, useRef, useState } from "react";
+
+import React, { useEffect, useState,useRef } from "react";
+
 import { StyleSheet, View, Alert, Button, TouchableOpacity } from "react-native";
 import MapView, { Marker, Circle } from "react-native-maps";
 import * as Location from "expo-location";
 import { useLogin } from "../app/auth/LoginContext";
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+
 import config from "@/config";
-import AddReminderModal from "./AddReminderModal";
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 
 
 const MapComponent = () => {
@@ -14,8 +16,9 @@ const MapComponent = () => {
     title: string;
     details: string;
     address: string;
-    reminderType: 'location' | 'time';
-    Time: string;
+
+    reminderType: 'location';
+
     lat: number;
     lng: number;
   };
@@ -35,20 +38,45 @@ const MapComponent = () => {
       };
     };
   };
+
   const triggeredReminders = useRef(new Set<string>());
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
-  const { reminders, fetchReminders, refreshKey } = useLogin(); // Access refreshKey from context
+  const {userId, reminders, fetchReminders, refreshKey } = useLogin(); // Access refreshKey from context
   const [mapKey, setMapKey] = useState(0);
-  const [refresh, setRefresh] = useState(false);
+
+  const [refresh, setrefresh] = useState(false); 
+
   const [nearbyMarkets, setNearbyMarkets] = useState<Market[]>([])
   const [showMarkets, setShowMarkets] = useState(false);
    const [locationReminders, setLocationReminders] = useState<Reminder[]>([]);
    const [selectedMarket, setSelectedMarket] = useState<{ lat: number; lng: number } | null>(null);
 
+
+   const [userAddress, setUserAddress] = useState<{ HouseLatitude: number; HouseLongitude: number } | null>(null);
+   const [leftHouse, setLeftHouse] = useState(false); // New state for tracking if the user left their house
+
+
+
   if (refresh) {
     setRefresh(false);
     fetchReminders();
   }
+
+  const fetchUserAddress = async () => {
+    try {
+      const response = await fetch(`${config.SERVER_API}/users/${userId}`); // Modify with the actual URL
+      const data = await response.json();
+      if (data.address) {
+        setUserAddress({ 
+          HouseLatitude: data.address.lat, 
+          HouseLongitude: data.address.lng 
+        });
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to fetch user data.");
+    }
+  };
+  
 
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
@@ -59,7 +87,9 @@ const MapComponent = () => {
         subscription = await Location.watchPositionAsync(
           {
             accuracy: Location.Accuracy.High,
+
             timeInterval: 5000, // Update location every 5 seconds
+
             distanceInterval: 10, // Update when moving 10 meters
           },
           (location) => {
@@ -70,6 +100,20 @@ const MapComponent = () => {
               latitudeDelta: 0.01,
               longitudeDelta: 0.01,
             });
+
+
+            if (userAddress) {
+              const distanceToHome = getDistance(
+                { latitude: location.coords.latitude, longitude: location.coords.longitude },
+                { latitude: userAddress.HouseLatitude, longitude: userAddress.HouseLongitude }
+              );
+              if (distanceToHome > 20 && !leftHouse) {
+                 setLeftHouse(true);
+              } else if (distanceToHome <= 20 && leftHouse) {
+                  setLeftHouse(false);
+              }
+            }
+
           }
         );
       } else {
@@ -82,8 +126,10 @@ const MapComponent = () => {
         subscription.remove();
       }
     };
-  }, []);
 
+  }, [userLocation, userAddress, leftHouse]);
+
+  
   const handleMarketPress = (lat: number, lng: number) => {
     setSelectedMarket({ lat, lng }); 
   };
@@ -97,7 +143,9 @@ const MapComponent = () => {
    
     const { latitude, longitude } = userLocation.coords;
     
-    const placesUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=2000&type=supermarket&key=${config.GOOGLE_API}`;
+
+    const placesUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=2000&type=store&key=${config.GOOGLE_API}`;
+
 
     try {
       const response = await fetch(placesUrl);
@@ -105,17 +153,18 @@ const MapComponent = () => {
 
       if (data.results) {
         setNearbyMarkets(data.results);
-        console.log("bhbh\n",data.results);
+
         setShowMarkets(!showMarkets);
       } else {
         Alert.alert("No Markets Found", "Try again later.");
-        console.log("bhbh2");
+
       }
     } catch (error) {
       console.error(error);
       Alert.alert("Error", "Failed to fetch nearby markets");
     }
   };
+
   const isWithinRadius = (reminderLat: number, reminderLong: number) => {
     if (userLocation) {
       const distance = getDistance(
@@ -151,27 +200,41 @@ const MapComponent = () => {
     console.log("refresh2");
     reminders.forEach((reminder) => {
       if (isWithinRadius(reminder.lat, reminder.lng) && !triggeredReminders.current.has(reminder.title)) {
-        Alert.alert("Reminder", `You are near the reminder ${reminder.title}\nremember to ${reminder.details}`);
-        triggeredReminders.current.add(reminder.title);
+
+        Alert.alert('Reminder', `You are near the reminder ${reminder.title}\nremember to ${reminder.details}`);
+        triggeredReminders.current.add(reminder.title);     
       }
     });
-    console.log(triggeredReminders);
-    fetchReminders();
-  }, [userLocation, reminders,refreshKey]);
+  }, [userLocation, reminders]);
 
-  useEffect(() => {
-    setMapKey(mapKey + 1);
-    setRefresh(true);
-    fetchReminders();
-    console.log('refresh')
-  }, [fetchReminders, refreshKey]);
 
-  // Fix: Create a reference for MapView
-  const mapRef = useRef<MapView | null>(null);
-  const saveReminder = (reminder: Reminder) => {
-    setLocationReminders([...locationReminders, reminder]);
+  const recenterToHouse = () => {
+    if (userAddress && mapRef.current) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: userAddress.HouseLatitude,
+          longitude: userAddress.HouseLongitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        1000
+      );
+    } else {
+      Alert.alert("No Address", "User address is not available.");
+    }
   };
-  // Recenter function
+    
+  // Fetch reminders when refreshKey changes
+  useEffect(() => {
+    setMapKey(mapKey+1);
+    setrefresh(true);
+    fetchReminders();
+    fetchUserAddress(); 
+  }, [fetchReminders, refreshKey]); // Triggered when refreshKey changes
+  
+  
+  const mapRef = useRef<MapView | null>(null);
+
   const recenterMap = () => {
     if (userLocation && mapRef.current) {
       mapRef.current.animateToRegion(
@@ -186,8 +249,10 @@ const MapComponent = () => {
     }
   };
 
+  
   return (
-    <View style={styles.MapContainer}>
+     <View style={styles.MapContainer}>
+
       {/* ✅ Added ref={mapRef} to MapView */}
       <MapView ref={mapRef} style={styles.map} region={mapRegion}>
         {userLocation && (
@@ -201,22 +266,28 @@ const MapComponent = () => {
           />
         )}
 
-        {reminders.map(
-          (reminder, index) =>
-            reminder.lat !== undefined &&
-            reminder.lng !== undefined && (
-              <React.Fragment key={reminder.id || index}>
-                <Marker coordinate={{ latitude: reminder.lat, longitude: reminder.lng }} pinColor="blue" title={reminder.title} />
-                <Circle
-                  center={{ latitude: reminder.lat, longitude: reminder.lng }}
-                  radius={200}
-                  strokeWidth={2}
-                  strokeColor="rgba(76, 76, 251, 0.5)"
-                  fillColor="rgba(101, 165, 255, 0.2)"
-                />
-              </React.Fragment>
-            )
-        )}
+
+        {/* Render reminders */}
+        {reminders.map((reminder, index) => (
+          reminder.lat !== undefined &&
+          reminder.lng !== undefined && (
+            <React.Fragment key={reminder.id || index}>
+              <Marker
+                coordinate={{ latitude: reminder.lat, longitude: reminder.lng }}
+                pinColor="blue"
+                title={reminder.title}
+              />
+              <Circle
+                center={{ latitude: reminder.lat, longitude: reminder.lng }}
+                radius={200}
+                strokeWidth={2}
+                strokeColor="rgba(76, 76, 251, 0.5)"
+                fillColor="rgba(101, 165, 255, 0.2)"
+              />
+            </React.Fragment>
+          )
+        ))}
+
         {/* ✅ Display Nearby Markets */}
         {showMarkets &&
           nearbyMarkets.map((market, index) => (
@@ -234,10 +305,33 @@ const MapComponent = () => {
           ))
           }
 
+          {userAddress && (
+        <React.Fragment key="userHome">
+        <Marker
+          coordinate={{
+            latitude: userAddress.HouseLatitude,
+            longitude: userAddress.HouseLongitude,
+          }}
+          title="Home"
+        >
+          <FontAwesome6 name="house" size={25} color="black" />
+        </Marker>
+        <Circle
+          center={{
+            latitude: userAddress.HouseLatitude,
+            longitude: userAddress.HouseLongitude,
+          }}
+          radius={10}
+          strokeWidth={2}
+          strokeColor="rgba(251, 76, 76, 0.5)"
+          fillColor="rgba(255, 106, 101, 0.2)"
+        />
+      </React.Fragment>
+      
+          )}
+
       </MapView>
-      
-      
-      
+
       <FontAwesome6 name="location-crosshairs" size={24} color="black" />
 
       <TouchableOpacity onPress={recenterMap} style={styles.recenterButtonContainer}>
@@ -246,14 +340,17 @@ const MapComponent = () => {
       <TouchableOpacity onPress={fetchNearbyMarkets} style={styles.marketButtonContainer}>
         <FontAwesome6 name="store" size={24} color="black" />
       </TouchableOpacity>
-    
+
+      <TouchableOpacity onPress={recenterToHouse} style={styles.houseButtonContainer}>
+  <FontAwesome6 name="house" size={24} color="black" />
+</TouchableOpacity>
+
 
     </View>
   );
 };
 
 export default MapComponent;
-
 const styles = StyleSheet.create({
   MapContainer: {
     flex: 1,
@@ -300,4 +397,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
   },
+
+  houseButtonContainer: {
+    position: "absolute",
+    top: 140,
+    left: 20,  // Adjust positioning to avoid overlap with recenter button
+    backgroundColor: "white",
+    padding: 10,
+    borderRadius: 10,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  
 });
