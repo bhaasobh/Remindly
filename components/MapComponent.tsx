@@ -35,7 +35,7 @@ const MapComponent = () => {
       };
     };
   };
-  const triggeredReminders = new Set<string>();
+  const triggeredReminders = useRef(new Set<string>());
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
   const { reminders, fetchReminders, refreshKey } = useLogin(); // Access refreshKey from context
   const [mapKey, setMapKey] = useState(0);
@@ -150,9 +150,9 @@ const MapComponent = () => {
   useEffect(() => {
     console.log("refresh2");
     reminders.forEach((reminder) => {
-      if (isWithinRadius(reminder.lat, reminder.lng) && !triggeredReminders.has(reminder.title)) {
+      if (isWithinRadius(reminder.lat, reminder.lng) && !triggeredReminders.current.has(reminder.title)) {
         Alert.alert("Reminder", `You are near the reminder ${reminder.title}\nremember to ${reminder.details}`);
-        triggeredReminders.add(reminder.title);
+        triggeredReminders.current.add(reminder.title);
       }
     });
     console.log(triggeredReminders);
