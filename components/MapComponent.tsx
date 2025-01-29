@@ -42,9 +42,8 @@ const MapComponent = () => {
   const [refresh, setRefresh] = useState(false);
   const [nearbyMarkets, setNearbyMarkets] = useState<Market[]>([])
   const [showMarkets, setShowMarkets] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [isModalVisible, setIsModalVisible] = useState(false);
    const [locationReminders, setLocationReminders] = useState<Reminder[]>([]);
+   const [selectedMarket, setSelectedMarket] = useState<{ lat: number; lng: number } | null>(null);
 
   if (refresh) {
     setRefresh(false);
@@ -52,27 +51,41 @@ const MapComponent = () => {
   }
 
   useEffect(() => {
-    console.log("refresh1");
+    let subscription: Location.LocationSubscription | null = null;
+  
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === "granted") {
-        const location = await Location.getCurrentPositionAsync({});
-        setUserLocation(location);
-        setMapRegion({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        });
+        subscription = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High,
+            timeInterval: 5000, // Update location every 5 seconds
+            distanceInterval: 10, // Update when moving 10 meters
+          },
+          (location) => {
+            setUserLocation(location);
+            setMapRegion({
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            });
+          }
+        );
       } else {
         Alert.alert("Permission Denied", "Location permission is required to use this feature.");
       }
     })();
+  
+    return () => {
+      if (subscription) {
+        subscription.remove();
+      }
+    };
   }, []);
 
   const handleMarketPress = (lat: number, lng: number) => {
-    setSelectedLocation({ lat, lng });
-    setIsModalVisible(true);
+    setSelectedMarket({ lat, lng }); 
   };
 
   const fetchNearbyMarkets = async () => {
@@ -157,7 +170,6 @@ const MapComponent = () => {
   const mapRef = useRef<MapView | null>(null);
   const saveReminder = (reminder: Reminder) => {
     setLocationReminders([...locationReminders, reminder]);
-    setIsModalVisible(false);
   };
   // Recenter function
   const recenterMap = () => {
@@ -218,10 +230,12 @@ const MapComponent = () => {
               title={market.name}
               onPress={() => handleMarketPress(market.geometry.location.lat, market.geometry.location.lng)}
             />
-          ))}
+            
+          ))
+          }
 
       </MapView>
-
+      
       
       
       <FontAwesome6 name="location-crosshairs" size={24} color="black" />
@@ -232,13 +246,7 @@ const MapComponent = () => {
       <TouchableOpacity onPress={fetchNearbyMarkets} style={styles.marketButtonContainer}>
         <FontAwesome6 name="store" size={24} color="black" />
       </TouchableOpacity>
-      {isModalVisible && (
-  <AddReminderModal
-    modalVisible={isModalVisible}
-    setModalVisible={setIsModalVisible} // ✅ Pass the setter correctly
-    onSaveReminder={saveReminder}
-  />
-)}
+    
 
     </View>
   );
@@ -271,6 +279,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
+  },
+  addButton: {
+    position: "absolute",
+    backgroundColor: "white",
+    padding: 10,
+    borderRadius: 50,
+    elevation: 5,
   },
   marketButtonContainer: {
     position: "absolute",
