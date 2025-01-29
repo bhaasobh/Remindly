@@ -36,7 +36,7 @@ const MapComponent = () => {
 
   const triggeredReminders = useRef(new Set<string>());
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
-  const { reminders, fetchReminders, refreshKey } = useLogin(); // Access refreshKey from context
+  const {userId, reminders, fetchReminders, refreshKey } = useLogin(); // Access refreshKey from context
   const [mapKey, setMapKey] = useState(0);
   const [refresh, setrefresh] = useState(false); 
   const [nearbyMarkets, setNearbyMarkets] = useState<Market[]>([])
@@ -44,11 +44,29 @@ const MapComponent = () => {
    const [locationReminders, setLocationReminders] = useState<Reminder[]>([]);
    const [selectedMarket, setSelectedMarket] = useState<{ lat: number; lng: number } | null>(null);
 
+   const [userAddress, setUserAddress] = useState<{ HouseLatitude: number; HouseLongitude: number } | null>(null);
+   const [leftHouse, setLeftHouse] = useState(false); // New state for tracking if the user left their house
+
+
   if(refresh)
   {
     setrefresh(false);
     fetchReminders();
   }
+  const fetchUserAddress = async () => {
+    try {
+      const response = await fetch(`${config.SERVER_API}/users/${userId}`); // Modify with the actual URL
+      const data = await response.json();
+      if (data.address) {
+        setUserAddress({ 
+          HouseLatitude: data.address.lat, 
+          HouseLongitude: data.address.lng 
+        });
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to fetch user data.");
+    }
+  };
   
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
@@ -59,7 +77,6 @@ const MapComponent = () => {
         subscription = await Location.watchPositionAsync(
           {
             accuracy: Location.Accuracy.High,
-            timeInterval: 5000, // Update location every 5 seconds
             distanceInterval: 10, // Update when moving 10 meters
           },
           (location) => {
@@ -70,6 +87,18 @@ const MapComponent = () => {
               latitudeDelta: 0.01,
               longitudeDelta: 0.01,
             });
+
+            if (userAddress) {
+              const distanceToHome = getDistance(
+                { latitude: location.coords.latitude, longitude: location.coords.longitude },
+                { latitude: userAddress.HouseLatitude, longitude: userAddress.HouseLongitude }
+              );
+              if (distanceToHome > 20 && !leftHouse) {
+                 setLeftHouse(true);
+              } else if (distanceToHome <= 20 && leftHouse) {
+                  setLeftHouse(false);
+              }
+            }
           }
         );
       } else {
@@ -82,7 +111,7 @@ const MapComponent = () => {
         subscription.remove();
       }
     };
-  }, []);
+  }, [userLocation, userAddress, leftHouse]);
 
   
   const handleMarketPress = (lat: number, lng: number) => {
@@ -97,7 +126,7 @@ const MapComponent = () => {
    
     const { latitude, longitude } = userLocation.coords;
     
-    const placesUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=2000&type=supermarket&key=${config.GOOGLE_API}`;
+    const placesUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=2000&type=store&key=${config.GOOGLE_API}`;
 
     try {
       const response = await fetch(placesUrl);
@@ -105,11 +134,9 @@ const MapComponent = () => {
 
       if (data.results) {
         setNearbyMarkets(data.results);
-        console.log("bhbh\n",data.results);
         setShowMarkets(!showMarkets);
       } else {
         Alert.alert("No Markets Found", "Try again later.");
-        console.log("bhbh2");
       }
     } catch (error) {
       console.error(error);
@@ -157,13 +184,30 @@ const MapComponent = () => {
       }
     });
   }, [userLocation, reminders]);
- 
+
+
+  const recenterToHouse = () => {
+    if (userAddress && mapRef.current) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: userAddress.HouseLatitude,
+          longitude: userAddress.HouseLongitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        1000
+      );
+    } else {
+      Alert.alert("No Address", "User address is not available.");
+    }
+  };
     
   // Fetch reminders when refreshKey changes
   useEffect(() => {
     setMapKey(mapKey+1);
     setrefresh(true);
     fetchReminders();
+    fetchUserAddress(); 
   }, [fetchReminders, refreshKey]); // Triggered when refreshKey changes
   
   
@@ -181,6 +225,7 @@ const MapComponent = () => {
       );
     }
   };
+  
   return (
      <View style={styles.MapContainer}>
       {/* ✅ Added ref={mapRef} to MapView */}
@@ -232,6 +277,30 @@ const MapComponent = () => {
             
           ))
           }
+          {userAddress && (
+        <React.Fragment key="userHome">
+        <Marker
+          coordinate={{
+            latitude: userAddress.HouseLatitude,
+            longitude: userAddress.HouseLongitude,
+          }}
+          title="Home"
+        >
+          <FontAwesome6 name="house" size={25} color="black" />
+        </Marker>
+        <Circle
+          center={{
+            latitude: userAddress.HouseLatitude,
+            longitude: userAddress.HouseLongitude,
+          }}
+          radius={10}
+          strokeWidth={2}
+          strokeColor="rgba(251, 76, 76, 0.5)"
+          fillColor="rgba(255, 106, 101, 0.2)"
+        />
+      </React.Fragment>
+      
+          )}
 
       </MapView>
       <FontAwesome6 name="location-crosshairs" size={24} color="black" />
@@ -242,7 +311,10 @@ const MapComponent = () => {
       <TouchableOpacity onPress={fetchNearbyMarkets} style={styles.marketButtonContainer}>
         <FontAwesome6 name="store" size={24} color="black" />
       </TouchableOpacity>
-    
+      <TouchableOpacity onPress={recenterToHouse} style={styles.houseButtonContainer}>
+  <FontAwesome6 name="house" size={24} color="black" />
+</TouchableOpacity>
+
     </View>
   );
 };
@@ -252,7 +324,7 @@ const styles = StyleSheet.create({
   MapContainer: {
     flex: 1,
     width: "100%",
-    height: "100%",
+    height: "10%",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -294,4 +366,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
   },
+  houseButtonContainer: {
+    position: "absolute",
+    top: 140,
+    left: 20,  // Adjust positioning to avoid overlap with recenter button
+    backgroundColor: "white",
+    padding: 10,
+    borderRadius: 10,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  
 });

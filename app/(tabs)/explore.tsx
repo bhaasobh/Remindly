@@ -136,7 +136,7 @@ export default function TabTwoScreen() {
     _id: string;
     itemName: string;
   }) => {
-    fetch(`${config.SERVER_API}/personal-list/${updatedPersonalItem._id}`, {
+    fetch(`${config.SERVER_API}/personal-items/${updatedPersonalItem._id}`, {
   method: 'PUT',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(updatedPersonalItem),
