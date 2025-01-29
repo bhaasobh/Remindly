@@ -64,8 +64,6 @@ const TimeReminderComponent: React.FC = () => {
         }
       }
     });
-    console.log(triggeredReminders);
-
   };
 
   useEffect(() => {

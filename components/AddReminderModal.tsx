@@ -45,6 +45,29 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({
       Alert.alert('Error', 'User ID is not available. Please log in again.');
       return;
     }
+    if (!title.trim()) {
+      Alert.alert('Error', 'Please enter a reminder title.');
+      return;
+    }
+    if (reminderType === 'location') {
+      if (!address.trim() || !latitude || !longitude) {
+        Alert.alert('Error', 'Please select an address.');
+        return;
+      }
+      if (!details.trim()) {
+        Alert.alert('Error', 'Please enter additional details.');
+        return;
+      }
+    } else if (reminderType === 'time') {
+      if (!Time.trim()) {
+        Alert.alert('Error', 'Please select a time.');
+        return;
+      }
+      if (!details.trim()) {
+        Alert.alert('Error', 'Please enter additional details.');
+        return;
+      }
+    }
   const timeArray = Time.split(':');
     const updatedDate = new Date(date);
     updatedDate.setHours(parseInt(timeArray[0]));
@@ -62,7 +85,6 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({
       longitude,
     };
 
-    console.log('Saved reminder:', newReminder);
     onSaveReminder(newReminder);
     setModalVisible(false);
     saveReminderToDatabase(newReminder);
@@ -76,7 +98,6 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({
       setAddress(fullAddress); 
       setLatitude(lat); 
       setLongitude(lng); 
-      console.log('Selected Address:', fullAddress, 'Latitude:', lat, 'Longitude:', lng);
     } else {
       console.warn('No details available for the selected place.');
       Alert.alert('Error', 'Unable to fetch address details.');
@@ -102,7 +123,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({
             }
           : {
               title: reminder.title,
-              details: reminder.details,
+              Details: reminder.details,
               Time: reminder.Time,
             };
 
@@ -114,12 +135,14 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({
 
       const result = await response.json();
       if (response.ok) {
-        console.log('Reminder saved successfully:', result);
         const savedReminder = {
           ...newReminder,
           id: result.reminder._id, 
         };
-        refreshReminders();
+        if(reminder.reminderType === 'location'){
+          refreshReminders();
+        }
+       
         onSaveReminder(savedReminder);
         setModalVisible(false); 
         Alert.alert('Success', 'Reminder added successfully!');      } else {

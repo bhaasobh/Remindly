@@ -39,12 +39,10 @@ const SignupComponent = ({ visible, onClose }: { visible: boolean; onClose: () =
 
       const data = await response.json();
       
-      console.log(JSON.stringify);
       if (response.ok) {
         Alert.alert('Success', 'Registration successful!');
         onClose(); // Close the modal
       } else {
-        console.log(data);
         if (data.error && (!data.err || data.err.code === undefined)) {
           Alert.alert('Error', data.error);
         } else if (data.err?.code === 11000) {
@@ -68,12 +66,6 @@ const SignupComponent = ({ visible, onClose }: { visible: boolean; onClose: () =
       const { lat, lng } = details.geometry.location;
 
       setAddress({
-        name,
-        lat,
-        lng,
-      });
-
-      console.log('Selected Address:', {
         name,
         lat,
         lng,

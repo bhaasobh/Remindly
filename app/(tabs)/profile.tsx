@@ -18,11 +18,9 @@ export default function ProfileScreen() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        console.log('Fetching user data for userId:', userId); // Debug userId
         const response = await fetch(`${config.SERVER_API}/users/${userId}`);
         const data = await response.json();
 
-        console.log('Server response:', data); // Debug server response
 
         if (response.ok) {
           // עיבוד נתונים לייצוג מחרוזות בלבד

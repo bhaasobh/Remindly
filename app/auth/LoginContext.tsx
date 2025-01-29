@@ -68,7 +68,6 @@ export const LoginProvider: React.FC<LoginProviderProps> = ({ children }) => {
         address: reminder.address.name || `${reminder.address.lat}, ${reminder.address.lng}`,
         details: reminder.details,
       }));
-      console.log('fetch from logincontext \n');
       setReminders(transformedReminders);
 
     } else {

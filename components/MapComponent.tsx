@@ -19,7 +19,6 @@ const MapComponent = () => {
 
   if(refresh)
   {
-    console.log("set refreshing");
     setrefresh(false);
     fetchReminders();
   }
@@ -83,7 +82,6 @@ const MapComponent = () => {
     
   // Fetch reminders when refreshKey changes
   useEffect(() => {
-    console.log("fetching from the map component");
     setMapKey(mapKey+1);
     setrefresh(true);
     fetchReminders();
@@ -106,8 +104,6 @@ const MapComponent = () => {
 
         {/* Render reminders */}
         {reminders.map((reminder, index) => (
-          console.log('reminder marker \n',reminder),
-          console.log('reminder address \n',reminder.lat),
           reminder.lat !== undefined &&
           reminder.lng !== undefined && (
             <React.Fragment key={reminder.id || index}>
