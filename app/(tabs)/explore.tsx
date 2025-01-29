@@ -33,10 +33,6 @@ export default function TabTwoScreen() {
             method: 'GET',
           });
           const shoppingData = await shoppingResponse.json();
-      
-          // console.log('Shopping List API Response:', shoppingData);
-
-      
           if (shoppingResponse.ok) {
             if (Array.isArray(shoppingData)) {
               setShoppingList(shoppingData);
@@ -61,11 +57,7 @@ export default function TabTwoScreen() {
             `${config.SERVER_API}/users/${userId}/personal-items`,
             { method: 'GET' }
           );
-    
-          const personalData = await personalResponse.json();
-    
-          // console.log('Personal List Response:', personalData);
-    
+          const personalData = await personalResponse.json();    
           if (personalResponse.ok) {
             setPersonalList(personalData.personalItems || []);
           } else {
@@ -126,11 +118,6 @@ export default function TabTwoScreen() {
         console.error('Error parsing response JSON');
         return { error: 'Invalid JSON response from server' };
       });
-      
-      console.log('Response Status:', response.status);
-      console.log('Response Data:', data);
-      
-      // Adjust to check for `data.newItem`
       if (response.ok && data.newItem) {
         setShoppingList((prev) => [
           ...prev,
@@ -149,13 +136,12 @@ export default function TabTwoScreen() {
     _id: string;
     itemName: string;
   }) => {
-    fetch(`${config.SERVER_API}/personal-list/${updatedPersonalItem._id}`, {
+    fetch(`${config.SERVER_API}/personal-items/${updatedPersonalItem._id}`, {
   method: 'PUT',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(updatedPersonalItem),
 })
   .then((res) => {
-    console.log('Response Status:', res.status);
     return res.json().then((data) => ({ ok: res.ok, data }));
   })
   .then(({ ok, data }) => {
