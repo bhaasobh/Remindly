@@ -13,7 +13,6 @@ const MapComponent = () => {
     details: string;
     address: string;
     reminderType: 'location';
-    Time: string;
     lat: number;
     lng: number;
   };
@@ -40,8 +39,6 @@ const MapComponent = () => {
   const { reminders, fetchReminders, refreshKey } = useLogin(); // Access refreshKey from context
   const [mapKey, setMapKey] = useState(0);
   const [refresh, setrefresh] = useState(false); 
-
-
   const [nearbyMarkets, setNearbyMarkets] = useState<Market[]>([])
   const [showMarkets, setShowMarkets] = useState(false);
    const [locationReminders, setLocationReminders] = useState<Reminder[]>([]);
@@ -168,6 +165,8 @@ const MapComponent = () => {
     setrefresh(true);
     fetchReminders();
   }, [fetchReminders, refreshKey]); // Triggered when refreshKey changes
+  
+  
   const mapRef = useRef<MapView | null>(null);
   const recenterMap = () => {
     if (userLocation && mapRef.current) {
