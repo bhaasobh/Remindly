@@ -197,7 +197,6 @@ const MapComponent = () => {
   };
 
   useEffect(() => {
-    console.log("refresh2");
     reminders.forEach((reminder) => {
       if (isWithinRadius(reminder.lat, reminder.lng) && !triggeredReminders.current.has(reminder.title)) {
 
