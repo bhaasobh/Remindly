@@ -131,7 +131,10 @@ const ShowReminder: React.FC<ShowReminderProps> = ({ reminder, onClose, onDelete
            {reminder.reminderType === 'time' && (
               <>
                  <Text style={styles.InfoTitle}>Date:                 Time:</Text>
-                 <Text>{new Date(reminder.Time).toLocaleDateString('en-GB')}     {new Date(reminder.Time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</Text>
+                 <View style={styles.dateTimeContainer}>
+                    <Text>{new Date(reminder.Time).toLocaleDateString('en-GB')}</Text>
+                    <Text style={styles.timeText}>{new Date(reminder.Time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</Text>
+                 </View>            
               </>
             )}
 
@@ -143,9 +146,11 @@ const ShowReminder: React.FC<ShowReminderProps> = ({ reminder, onClose, onDelete
               <TouchableOpacity onPress={onClose} style={styles.closeButtonContainer}>
                 <Text style={styles.closeButton}>Close</Text>
               </TouchableOpacity>
+              {reminder.reminderType === 'location' && (
               <TouchableOpacity onPress={handleNavigateToWaze} style={styles.wazeButton}>
-  <FontAwesome5 name="waze" size={24} color="black" />
-</TouchableOpacity>
+              <FontAwesome5 name="waze" size={24} color="black" />
+              </TouchableOpacity>
+              )}
 
               <TouchableOpacity onPress={handleEdit} style={styles.editButton}>
                 <MaterialIcons name="edit" size={24} color="black" />
@@ -204,19 +209,29 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   editButton: {
+    position:'absolute',
     padding: 10,
     borderRadius: 5,
-    left: 40,
+    left: 190,
   },
   wazeButton: {
+    position:'absolute',
     padding: 10,
     borderRadius: 5,
-    left: 70,
+    left: 150,
   },
   deleteButton: {
     padding: 10,
     borderRadius: 5,
     left:10,
+  },
+  dateTimeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  timeText: {
+    position:'absolute',
+    left: 102, 
   },
 });
 
