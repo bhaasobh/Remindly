@@ -50,6 +50,8 @@ const MapComponent = () => {
   const [showMarkets, setShowMarkets] = useState(false);
    const [locationReminders, setLocationReminders] = useState<Reminder[]>([]);
    const [selectedMarket, setSelectedMarket] = useState<{ lat: number; lng: number } | null>(null);
+   const [lastMapUpdateLocation, setLastMapUpdateLocation] = useState<Location.LocationObject | null>(null);
+
 
 
    const [userAddress, setUserAddress] = useState<{ HouseLatitude: number; HouseLongitude: number } | null>(null);
@@ -80,6 +82,7 @@ const MapComponent = () => {
 
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
+    
   
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -93,13 +96,26 @@ const MapComponent = () => {
             distanceInterval: 10, // Update when moving 10 meters
           },
           (location) => {
+            
             setUserLocation(location);
-            setMapRegion({
-              latitude: location.coords.latitude,
-              longitude: location.coords.longitude,
-              latitudeDelta: 0.01,
-              longitudeDelta: 0.01,
-            });
+            if (lastMapUpdateLocation) {
+              const distanceMoved = getDistance(
+                { latitude: location.coords.latitude, longitude: location.coords.longitude },
+                { latitude: lastMapUpdateLocation.coords.latitude, longitude: lastMapUpdateLocation.coords.longitude }
+              );
+            
+              if (distanceMoved >= 100) { // Update map only when user moves 100m
+                setMapRegion({
+                  latitude: location.coords.latitude,
+                  longitude: location.coords.longitude,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                });
+                setLastMapUpdateLocation(location); // Save last updated location
+              }
+            } else {
+              setLastMapUpdateLocation(location); // Initialize last map update location
+            }
 
 
             if (userAddress) {
@@ -197,6 +213,7 @@ const MapComponent = () => {
   };
 
   useEffect(() => {
+   
     reminders.forEach((reminder) => {
       if (isWithinRadius(reminder.lat, reminder.lng) && !triggeredReminders.current.has(reminder.title)) {
 
@@ -359,8 +376,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   map: {
+    bottom:"10%",
     width: "100%",
-    height: "100%",
+    height: "80%",
     borderRadius: 10,
   },
   recenterButtonContainer: {
