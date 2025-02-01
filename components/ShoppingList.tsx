@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Modal, Pressable, TextInput } from 'react-native';
 import { Entypo, MaterialIcons } from '@expo/vector-icons';
 
+
 interface ShoppingListProps {
   items: { _id: string; itemName: string; qty: number; days: number }[];
   onAddItem: () => void;
@@ -63,14 +64,14 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({
           <View style={styles.modalView}>
             <Text style={styles.modalText}>Edit Item</Text>
             <TextInput
-  placeholder="Enter quantity"
-  keyboardType="numeric"
-  style={styles.input}
-  value={editingItem?.qty?.toString() || ''}
-  onChangeText={(text) =>
-    setEditingItem((prev) => {
-      if (!prev) return null; // Safeguard in case prev is null
-      return { ...prev, qty: parseInt(text, 10) || 0 }; // Ensure all fields exist
+              placeholder="Enter quantity"
+              keyboardType="numeric"
+              style={styles.input}
+              value={editingItem?.qty?.toString() || ''}
+              onChangeText={(text) =>
+                setEditingItem((prev) => {
+                  if (!prev) return null; // Safeguard in case prev is null
+                  return { ...prev, qty: parseInt(text, 10) || 0 }; // Ensure all fields exist
     })
   }
 />
@@ -86,7 +87,7 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({
     })
   }
 />
-
+      <View style={styles.editButtons}>
             <Pressable style={[styles.button, styles.buttonSave]} onPress={handleSaveEdit}>
               <Text style={styles.textStyle}>Save</Text>
             </Pressable>
@@ -95,7 +96,8 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({
               onPress={() => setIsEditing(false)}>
               <Text style={styles.textStyle}>Cancel</Text>
             </Pressable>
-          </View>
+        </View>
+      </View>
         </View>
       </Modal>
 
@@ -111,7 +113,18 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({
               <TouchableOpacity onPress={() => handleEdit(item)}>
                 <MaterialIcons name="edit" size={24} color="#DF6316" />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => onRemoveItem(item._id)}>
+                <TouchableOpacity
+                                onPress={() =>
+                                  Alert.alert(
+                                    "Delete Item",
+                                    `Are you sure you want to delete "${item.itemName}"?`,
+                                    [
+                                      { text: "Cancel", style: "cancel" },
+                                      { text: "Yes", onPress: () => onRemoveItem(item._id) },
+                                    ]
+                                  )
+                                }
+                  >
                 <Entypo name="trash" size={20} color="#ff0000" />
               </TouchableOpacity>
             </View>
@@ -139,11 +152,12 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({
         </TouchableOpacity>
       </View>
     </View>
+    
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
+  container: { flex: 1},
   itemContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -155,7 +169,7 @@ const styles = StyleSheet.create({
   itemText: { fontSize: 18 },
   itemActions: { flexDirection: 'row', gap: 10 },
   emptyText: { textAlign: 'center', marginTop: 50, fontSize: 18, color: '#888' },
-  actionButtons: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 },
+  actionButtons: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 , bottom : 100},
   addButton: { backgroundColor: '#DF6316', paddingVertical: 15, paddingHorizontal: 20, borderRadius: 5 },
   addButtonText: { color: '#fff', fontSize: 18 },
   deleteButton: { backgroundColor: '#FF4C4C', paddingVertical: 15, paddingHorizontal: 20, borderRadius: 5 },
@@ -191,7 +205,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   button: {
-    borderRadius: 20,
+    borderRadius: 5,
     padding: 10,
     elevation: 2,
   },
@@ -207,5 +221,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  editButtons:{
+    flexDirection: 'row', justifyContent: 'space-around',
+    gap: 80,
   },
 });
