@@ -1,6 +1,5 @@
 
 import React, { useEffect, useState,useRef } from "react";
-
 import { StyleSheet, View, Alert, Button, TouchableOpacity } from "react-native";
 import MapView, { Marker, Circle } from "react-native-maps";
 import * as Location from "expo-location";
@@ -8,6 +7,7 @@ import { useLogin } from "../app/auth/LoginContext";
 
 import config from "@/config";
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import ShowItemList from "./ShowItemList"; // Import ShowItemList component
 
 
 const MapComponent = () => {
@@ -48,12 +48,15 @@ const MapComponent = () => {
 
   const [nearbyMarkets, setNearbyMarkets] = useState<Market[]>([])
   const [showMarkets, setShowMarkets] = useState(false);
-   const [locationReminders, setLocationReminders] = useState<Reminder[]>([]);
-   const [selectedMarket, setSelectedMarket] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationReminders, setLocationReminders] = useState<Reminder[]>([]);
+  const [selectedMarket, setSelectedMarket] = useState<{ lat: number; lng: number } | null>(null);
+  const [lastMapUpdateLocation, setLastMapUpdateLocation] = useState<Location.LocationObject | null>(null);
+
 
 
    const [userAddress, setUserAddress] = useState<{ HouseLatitude: number; HouseLongitude: number } | null>(null);
    const [leftHouse, setLeftHouse] = useState(false); // New state for tracking if the user left their house
+   const [showItemList, setShowItemList] = useState(false); // Control visibility of ShowItemList
 
 
 
@@ -62,24 +65,25 @@ const MapComponent = () => {
     fetchReminders();
   }
 
-  const fetchUserAddress = async () => {
-    try {
-      const response = await fetch(`${config.SERVER_API}/users/${userId}`); // Modify with the actual URL
-      const data = await response.json();
-      if (data.address) {
-        setUserAddress({ 
-          HouseLatitude: data.address.lat, 
-          HouseLongitude: data.address.lng 
-        });
+  useEffect(() => {
+    // Fetch user's address when component mounts
+    const fetchUserAddress = async () => {
+      try {
+        const response = await fetch(`${config.SERVER_API}/users/${userId}`);
+        const data = await response.json();
+        if (data.address) {
+          setUserAddress({ HouseLatitude: data.address.lat, HouseLongitude: data.address.lng });
+        }
+      } catch (error) {
+        Alert.alert("Error", "Failed to fetch user data.");
       }
-    } catch (error) {
-      Alert.alert("Error", "Failed to fetch user data.");
-    }
-  };
-  
+    };
+    fetchUserAddress();
+  }, [userId]);
 
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
+    
   
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -93,27 +97,42 @@ const MapComponent = () => {
             distanceInterval: 10, // Update when moving 10 meters
           },
           (location) => {
+            
             setUserLocation(location);
-            setMapRegion({
-              latitude: location.coords.latitude,
-              longitude: location.coords.longitude,
-              latitudeDelta: 0.01,
-              longitudeDelta: 0.01,
-            });
-
+            if (lastMapUpdateLocation) {
+              const distanceMoved = getDistance(
+                { latitude: location.coords.latitude, longitude: location.coords.longitude },
+                { latitude: lastMapUpdateLocation.coords.latitude, longitude: lastMapUpdateLocation.coords.longitude }
+              );
+            
+              if (distanceMoved >= 100) { // Update map only when user moves 100m
+                setMapRegion({
+                  latitude: location.coords.latitude,
+                  longitude: location.coords.longitude,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                });
+                setLastMapUpdateLocation(location); // Save last updated location
+              }
+            } else {
+              setLastMapUpdateLocation(location); // Initialize last map update location
+            }
 
             if (userAddress) {
               const distanceToHome = getDistance(
                 { latitude: location.coords.latitude, longitude: location.coords.longitude },
                 { latitude: userAddress.HouseLatitude, longitude: userAddress.HouseLongitude }
               );
-              if (distanceToHome > 20 && !leftHouse) {
-                 setLeftHouse(true);
-              } else if (distanceToHome <= 20 && leftHouse) {
-                  setLeftHouse(false);
+
+              // Check if user has left the house
+              if (distanceToHome > 50 && !leftHouse) {
+                setLeftHouse(true);
+                setShowItemList(true); // Show item list modal
+              } else if (distanceToHome <= 50 && leftHouse) {
+                setLeftHouse(false);
+                setShowItemList(false); // Hide item list modal
               }
             }
-
           }
         );
       } else {
@@ -197,7 +216,7 @@ const MapComponent = () => {
   };
 
   useEffect(() => {
-    console.log("refresh2");
+   
     reminders.forEach((reminder) => {
       if (isWithinRadius(reminder.lat, reminder.lng) && !triggeredReminders.current.has(reminder.title)) {
 
@@ -229,7 +248,6 @@ const MapComponent = () => {
     setMapKey(mapKey+1);
     setrefresh(true);
     fetchReminders();
-    fetchUserAddress(); 
   }, [fetchReminders, refreshKey]); // Triggered when refreshKey changes
   
   
@@ -321,7 +339,7 @@ const MapComponent = () => {
             latitude: userAddress.HouseLatitude,
             longitude: userAddress.HouseLongitude,
           }}
-          radius={10}
+          radius={50}
           strokeWidth={2}
           strokeColor="rgba(251, 76, 76, 0.5)"
           fillColor="rgba(255, 106, 101, 0.2)"
@@ -331,6 +349,12 @@ const MapComponent = () => {
           )}
 
       </MapView>
+        {showItemList && (
+        <ShowItemList
+          visible={showItemList}
+          onClose={() => setShowItemList(false)} // Close the modal when clicked
+        />
+      )}
 
       <FontAwesome6 name="location-crosshairs" size={24} color="black" />
 
@@ -342,8 +366,8 @@ const MapComponent = () => {
       </TouchableOpacity>
 
       <TouchableOpacity onPress={recenterToHouse} style={styles.houseButtonContainer}>
-  <FontAwesome6 name="house" size={24} color="black" />
-</TouchableOpacity>
+      <FontAwesome6 name="house" size={24} color="black" />
+      </TouchableOpacity>
 
 
     </View>
@@ -360,8 +384,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   map: {
+    bottom:"10%",
     width: "100%",
-    height: "100%",
+    height: "80%",
     borderRadius: 10,
   },
   recenterButtonContainer: {

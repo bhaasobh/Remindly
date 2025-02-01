@@ -7,10 +7,12 @@ import {
   TextInput,
   FlatList,
   Alert,
+  Platform,
 } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import config from '@/config';
 import { useLogin } from '../app/auth/LoginContext';
+import DateTimePicker from '@react-native-community/datetimepicker'; // Import date picker
 
 type Reminder = {
   id: string;
@@ -45,6 +47,35 @@ const ReminderDetails: React.FC<ReminderDetailsProps> = ({ reminder, onClose, on
   const [suggestions, setSuggestions] = useState<PlacePrediction[]>([]);
   const { userId, refreshReminders } = useLogin();
 
+  const [date, setDate] = useState(new Date(editableReminder.Time || Date.now()));
+  const [time, setTime] = useState(new Date(editableReminder.Time || Date.now()));
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  
+  const onChangeDate = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      setDate(selectedDate);
+  
+      // Combine selected date with existing time
+      const updatedDateTime = new Date(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth(),
+        selectedDate.getDate(),
+        time.getHours(),
+        time.getMinutes()
+      );
+  
+      handleEditChange('Time', updatedDateTime.toISOString());
+    }
+  };
+  const onChangeTime = (event: any, selectedTime?: Date) => {
+    setShowTimePicker(false);
+    if (selectedTime) {
+      setTime(selectedTime);
+      handleEditChange('Time', selectedTime.toISOString()); // Save time in ISO format
+    }
+  };
   useEffect(() => {
     if (editableReminder.address?.name) {
       setPrevAddress(editableReminder.address.name);
@@ -148,7 +179,6 @@ const ReminderDetails: React.FC<ReminderDetailsProps> = ({ reminder, onClose, on
       <View
         style={[
           styles.modalContent,
-          { height: editableReminder.reminderType === 'time' ? 380 : 470 },
         ]}
       >
         <Text style={styles.modalTitle}>Edit Reminder</Text>
@@ -191,16 +221,42 @@ const ReminderDetails: React.FC<ReminderDetailsProps> = ({ reminder, onClose, on
           </>
         )}
 
-        {editableReminder.reminderType === 'time' && (
-          <>
-            <Text style={styles.InfoTitle}>Time:</Text>
-            <TextInput
-              style={styles.input}
-              value={editableReminder.Time}
-              onChangeText={(text) => handleEditChange('Time', text)}
-            />
-          </>
-        )}
+{isTimeReminder && (
+  <>
+    <Text style={styles.InfoTitle}>Date:</Text>
+    <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.timePickerButton}>
+      <Text style={styles.timePickerText}>
+        {date.toLocaleDateString()}
+      </Text>
+    </TouchableOpacity>
+
+    {showDatePicker && (
+      <DateTimePicker
+        value={date}
+        mode="date"
+        display={Platform.OS === 'android' ? 'default' : 'spinner'}
+        onChange={onChangeDate}
+      />
+    )}
+
+    <Text style={styles.InfoTitle}>Time:</Text>
+    <TouchableOpacity onPress={() => setShowTimePicker(true)} style={styles.timePickerButton}>
+      <Text style={styles.timePickerText}>
+        {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+      </Text>
+    </TouchableOpacity>
+
+    {showTimePicker && (
+      <DateTimePicker
+        value={time}
+        mode="time"
+        display="spinner"
+        onChange={onChangeTime}
+      />
+    )}
+  </>
+)}
+
 
         <Text style={styles.InfoTitle}>Details:</Text>
         <TextInput
@@ -291,6 +347,18 @@ const styles = StyleSheet.create({
     color: '#DF6316',
     fontWeight: 'bold',
   },
+  timePickerButton: {
+    borderColor: '#ccc',
+    borderWidth: 1,
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  timePickerText: {
+    fontSize: 16,
+    color: '#444',
+  },
+  
 });
 
 export default ReminderDetails;
