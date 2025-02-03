@@ -39,7 +39,8 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isTimePicker, setIsTimePicker] = useState(false);
 
-
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedTime, setSelectedTime] = useState<Date>(new Date());
   const handleSave = () => {
     if (!userId) {
       Alert.alert('Error', 'User ID is not available. Please log in again.');
@@ -69,10 +70,10 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({
       }
     }
   const timeArray = Time.split(':');
-    const updatedDate = new Date(date);
-    updatedDate.setHours(parseInt(timeArray[0]));
-    updatedDate.setMinutes(parseInt(timeArray[1]));
-
+    const updatedDate = new Date(selectedDate);
+    if (selectedTime) {
+      updatedDate.setHours(selectedTime.getHours(), selectedTime.getMinutes(), 0, 0);
+    }
     const newReminder = {
       id: Date.now().toString(),
       title,
@@ -215,12 +216,12 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({
             <>
               <Text>Date:</Text>
               <TouchableOpacity onPress={() => { setShowDatePicker(true); setIsTimePicker(false); }}>
-                <Text style={styles.input}>{date.toDateString()}</Text>
+              <Text style={styles.input}>{selectedDate.toDateString()}</Text>
               </TouchableOpacity>
 
               <Text>Time:</Text>
               <TouchableOpacity onPress={() => { setShowDatePicker(true); setIsTimePicker(true); }}>
-                <Text style={styles.input}>{Time || 'Select Time'}</Text>
+                <Text style={styles.input}>{selectedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
               </TouchableOpacity>
 
               {showDatePicker && (
@@ -232,11 +233,8 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({
                     setShowDatePicker(false);
                     if (selectedDate) {
                       if (isTimePicker) {
-                        const formattedTime = selectedDate.toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        });
-                        setTime(formattedTime);
+                       
+                        setSelectedTime(selectedDate);
                       } else {
                         setDate(selectedDate);
                       }
