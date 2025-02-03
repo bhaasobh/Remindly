@@ -48,9 +48,11 @@ const MapComponent = () => {
 
   const [nearbyMarkets, setNearbyMarkets] = useState<Market[]>([])
   const [showMarkets, setShowMarkets] = useState(false);
+
   const [locationReminders, setLocationReminders] = useState<Reminder[]>([]);
   const [selectedMarket, setSelectedMarket] = useState<{ lat: number; lng: number } | null>(null);
   const [lastMapUpdateLocation, setLastMapUpdateLocation] = useState<Location.LocationObject | null>(null);
+
 
 
 
@@ -117,6 +119,7 @@ const MapComponent = () => {
             } else {
               setLastMapUpdateLocation(location); // Initialize last map update location
             }
+
 
             if (userAddress) {
               const distanceToHome = getDistance(
