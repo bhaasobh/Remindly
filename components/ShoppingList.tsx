@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Modal, Pressable, TextInput } from 'react-native';
 import { Entypo, MaterialIcons } from '@expo/vector-icons';
+import config from '../config';
 
 
 interface ShoppingListProps {
@@ -26,6 +27,44 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({
     days: number;
   } | null>(null);
 
+  const [shoppingList, setShoppingList] = useState(items);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShoppingList((prevList) => {
+        return prevList.map((item) => {
+          if (item.days > 1) {
+            const newDays = item.days - 1;
+
+            // 🔹 שליחת עדכון לשרת (שמירת הנתונים)
+            fetch(`${config.SERVER_API}/shopping-list/${item._id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ days: newDays }),
+            }).catch((err) => console.error('Error updating item:', err));
+
+            return { ...item, days: newDays };
+          } else if (item.days === 1) {
+            // 🔹 נעצור את ההורדה כאשר days = 1
+            return item;
+          }
+          return item;
+        });
+      });
+    }, 86400000); // מתבצע כל 24 שעות (86400000 מילי-שניות)
+
+    return () => clearInterval(interval); // ניקוי ה-interval כשמתנתקים
+  }, []);
+
+  // 🔔 התראה כשהימים מגיעים ל-0
+  useEffect(() => {
+    shoppingList.forEach((item) => {
+      if (item.days === 0) {
+        Alert.alert('Reminder', ` ${item.itemName} is running out!`);
+      }
+    });
+  }, [shoppingList]);
+  
   // Handle editing an item
   const handleEdit = (item: { _id: string; itemName: string; qty: number; days: number }) => {
     setEditingItem(item);
@@ -41,14 +80,6 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({
     }
   };
 
-  // Check expiry dates when items are added or updated
-  useEffect(() => {
-    items.forEach((item) => {
-      if (item.days <= 0) {
-        Alert.alert('Reminder', `${item.itemName} is running out!`);
-      }
-    });
-  }, [items]);
 
   return (
     <View style={styles.container}>

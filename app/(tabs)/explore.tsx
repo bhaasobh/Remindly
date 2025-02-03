@@ -228,6 +228,41 @@ export default function TabTwoScreen() {
     }
   };
 
+  const handleClearShoppingList = async () => {
+    try {
+      // מחיקת כל הפריטים אחד-אחד
+      await Promise.all(
+        shoppingList.map(async (item) => {
+          await fetch(`${config.SERVER_API}/shopping-list/${userId}/${item._id}`, {
+            method: 'DELETE',
+          });
+        })
+      );
+      setShoppingList([]); // עדכון ה-state לאחר מחיקה
+    } catch (error) {
+      console.error('Error clearing shopping list:', error);
+      Alert.alert('Error', 'Failed to clear shopping list.');
+    }
+  };
+  
+  const handleClearPersonalList = async () => {
+    try {
+      // מחיקת כל הפריטים אחד-אחד
+      await Promise.all(
+        personalList.map(async (item) => {
+          await fetch(`${config.SERVER_API}/personal-items/${item._id}`, {
+            method: 'DELETE',
+          });
+        })
+      );
+      setPersonalList([]); // עדכון ה-state לאחר מחיקה
+    } catch (error) {
+      console.error('Error clearing personal list:', error);
+      Alert.alert('Error', 'Failed to clear personal list.');
+    }
+  };
+  
+
   return (
     <>
       <View style={styles.headerStyle}> 
@@ -259,7 +294,7 @@ export default function TabTwoScreen() {
           <ShoppingList
             items={shoppingList}
             onAddItem={() => setModalVisible(true)}
-            onRemoveAll={() => setShoppingList([])}
+            onRemoveAll={handleClearShoppingList}
             onRemoveItem={handleRemoveShoppingItem}
             onUpdateItem={handleUpdateItem}
           />
@@ -267,7 +302,7 @@ export default function TabTwoScreen() {
           <PersonalList
             items={personalList}
             onAddItem={() => setModalVisible(true)}
-            onRemoveAll={() => setPersonalList([])}
+            onRemoveAll={handleClearPersonalList}
             onRemoveItem={handleRemovePersonalItem}
             onUpdateItem={handleUpdatePersonalItem}
           />
