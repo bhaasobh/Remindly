@@ -55,12 +55,22 @@ export default function ProfileScreen() {
   }
 
   // Default profile images based on gender
+  // שימוש בתמונות אווטאר לפי מין המשתמש
   const profileImageUri =
-    userData.gender === 'male'
-      ? 'https://randomuser.me/api/portraits/men/1.jpg'
-      : userData.gender === 'female'
-      ? 'https://randomuser.me/api/portraits/women/18.jpg'
-      : 'https://via.placeholder.com/150';
+  userData.gender === 'male'
+    ? `https://api.dicebear.com/6.x/adventurer/png?seed=${userData.firstName}`
+    : userData.gender === 'female'
+    ? `https://api.dicebear.com/6.x/adventurer/png?seed=${userData.firstName}`
+    : `https://api.dicebear.com/6.x/adventurer/png?seed=neutral`;
+
+    // שימוש ב-Image של React Native
+    <Image
+      source={{ uri: profileImageUri }}
+      style={styles.profileImage}
+    />
+
+
+
 
   return (
     <>
