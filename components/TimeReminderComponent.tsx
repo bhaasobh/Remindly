@@ -18,8 +18,7 @@ interface Reminder {
 const TimeReminderComponent: React.FC = () => {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const { userId } = useLogin();
-  const triggeredReminders = new Set<string>();
-
+  const calledReminders = new Set<string>();
   const fetchReminders = useCallback(async () => {
     try {
       const response = await fetch(config.SERVER_API + '/users/' + userId + '/reminders', {
@@ -43,38 +42,43 @@ const TimeReminderComponent: React.FC = () => {
   }, [userId]);
 
   const checkReminders = (reminders: Reminder[]) => {
-    const currentTime = new Date();
-
+    const currentTime = new Date(); // Current device local time
+  
     reminders.forEach(reminder => {
-      const reminderTime = new Date(reminder.Time);
-      if (isNaN(reminderTime.getTime())) {
+      const reminderTimeLocal = new Date(reminder.Time); // Use as is
+  
+      if (isNaN(reminderTimeLocal.getTime())) {
         console.error('Invalid reminder time:', reminder.Time);
         return;
       }
-
-      const timeDifference = reminderTime.getTime() - currentTime.getTime();
+  
+      const timeDifference = reminderTimeLocal.getTime() - currentTime.getTime();
       const oneHourInMillis = 60 * 60 * 1000;
-      console.log(triggeredReminders);
+  
+      console.log('Current time (Local):', currentTime.toString());
+      console.log('Reminder time (Local):', reminderTimeLocal.toString());
+      console.log('Time difference:', timeDifference);
+  
+      if (!calledReminders.has(reminder.title)&&timeDifference > 0 && timeDifference <= oneHourInMillis) {
+        const isSameDay = currentTime.toDateString() === reminderTimeLocal.toDateString();
 
-      if (timeDifference > 0 && timeDifference <= oneHourInMillis) {
-        const isSameDay = currentTime.toDateString() === reminderTime.toDateString();
-
-        if (isSameDay && !triggeredReminders.has(reminder.title)) {
+        console.log('Is same day:', isSameDay);
+  
+        if (isSameDay) {
           Alert.alert('Reminder Alert', `Your reminder "${reminder.title}" is in 1 hour!`);
-          triggeredReminders.add(reminder.title); // Mark reminder as triggered
-        }
-      }
+          calledReminders.add(reminder.title);         }
+      }        console.log(calledReminders);
+
     });
-    console.log(triggeredReminders);
-
   };
-
+  
+  
   useEffect(() => {
     fetchReminders();
 
     const interval = setInterval(() => {
       fetchReminders(); 
-    }, 60000); 
+    }, 10000); 
 
     return () => clearInterval(interval);
   }, [fetchReminders]);

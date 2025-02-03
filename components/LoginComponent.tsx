@@ -39,7 +39,6 @@ const Login = () => {
         setUserId(data.user._id);        
         setIsLoginComplete(true); 
       } else {
-        console.log(data);
         Alert.alert('Error', data.error || 'Login failed!');
       }
     } catch (error) {

@@ -57,13 +57,14 @@ export const PersonalList: React.FC<PersonalListProps> = ({
                 setEditingItem((prev) => (prev ? { ...prev, itemName: text } : null))
               }
             />
-
+          <View style={styles.editButtons}>
             <Pressable style={[styles.button, styles.buttonSave]} onPress={handleSaveEdit}>
               <Text style={styles.textStyle}>Save</Text>
             </Pressable>
             <Pressable style={[styles.button, styles.buttonClose]} onPress={() => setIsEditing(false)}>
               <Text style={styles.textStyle}>Cancel</Text>
             </Pressable>
+          </View>
           </View>
         </View>
       </Modal>
@@ -200,7 +201,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   button: {
-    borderRadius: 20,
+    borderRadius: 5,
     padding: 10,
     elevation: 2,
   },
@@ -216,5 +217,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 18,
     fontWeight: "bold",
+  },
+  editButtons:{
+    flexDirection: 'row', justifyContent: 'space-around',
+    gap: 80,
   },
 });

@@ -2,36 +2,33 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, ActivityIndicator } from 'react-native';
 import { Entypo, Feather } from '@expo/vector-icons';
 import { useLogin } from '../auth/LoginContext';
+import Header from '../../components/Header';
 import config from '../../config';
 
 export default function ProfileScreen() {
-  const { userId } = useLogin(); // שימוש בקונטקסט כדי לקבל userId
+  const { userId } = useLogin();
   const [userData, setUserData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     address: '',
-    gender: '', // נוסיף gender לפרופיל
+    gender: '',
   });
-  const [loading, setLoading] = useState(true); // מצב טעינה
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        console.log('Fetching user data for userId:', userId); // Debug userId
         const response = await fetch(`${config.SERVER_API}/users/${userId}`);
         const data = await response.json();
 
-        console.log('Server response:', data); // Debug server response
-
         if (response.ok) {
-          // עיבוד נתונים לייצוג מחרוזות בלבד
           setUserData({
             firstName: data.username || '',
             lastName: data.lastName || '',
             email: data.email || '',
-            address: data.address?.name || '', // שימוש ב-name של address
-            gender: data.gender || '', // נוסיף gender
+            address: data.address?.name || '',
+            gender: data.gender || '',
           });
         } else {
           Alert.alert('Error', data.error || 'Failed to fetch user data.');
@@ -40,116 +37,146 @@ export default function ProfileScreen() {
         console.error('Error fetching user data:', error);
         Alert.alert('Error', 'An error occurred while fetching user data.');
       } finally {
-        setLoading(false); // עצירת מצב הטעינה
+        setLoading(false);
       }
     };
 
     fetchUserData();
   }, [userId]);
 
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#DF6316" />
+        <ActivityIndicator size="large" color="#4A90E2" />
         <Text>Loading your profile...</Text>
       </View>
     );
   }
 
-  // קביעת תמונת פרופיל לפי מגדר
+  // Default profile images based on gender
+  // שימוש בתמונות אווטאר לפי מין המשתמש
   const profileImageUri =
-    userData.gender === 'male'
-      ? 'https://randomuser.me/api/portraits/men/1.jpg' // תמונה לגבר
-      : userData.gender === 'female'
-      ? 'https://randomuser.me/api/portraits/women/1.jpg' // תמונה לאישה
-      : 'https://via.placeholder.com/100'; // תמונת ברירת מחדל
+  userData.gender === 'male'
+    ? `https://api.dicebear.com/6.x/adventurer/png?seed=${userData.firstName}`
+    : userData.gender === 'female'
+    ? `https://api.dicebear.com/6.x/adventurer/png?seed=${userData.firstName}`
+    : `https://api.dicebear.com/6.x/adventurer/png?seed=neutral`;
+
+    // שימוש ב-Image של React Native
+    <Image
+      source={{ uri: profileImageUri }}
+      style={styles.profileImage}
+    />
+
+
+
 
   return (
+    <>
+    <View style={styles.headerStyle}> 
+        <Header />
+      </View>
+
     <View style={styles.container}>
-      {/* כותרת עליונה */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity>
-          <Entypo name="chevron-left" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Profile</Text>
-        <TouchableOpacity>
-          <Feather name="more-vertical" size={24} color="#fff" />
+          <Entypo name="chevron-left" size={28} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      {/* חלק עליון - רקע צבעוני */}
-      <View style={styles.profileSection}>
+      {/* Profile Card */}
+      <View style={styles.profileCard}>
         <Image source={{ uri: profileImageUri }} style={styles.profileImage} />
-        <Text style={styles.profileName}>{`${userData.firstName} ${userData.lastName}`}</Text>
+        <Text style={styles.profileName}>{`${userData.firstName}`}</Text>
         <Text style={styles.profileLocation}>{userData.address}</Text>
       </View>
 
-      {/* טופס */}
-      <View style={styles.form}>
-        <Text>Your Name</Text>
-        <TextInput style={styles.input} value={userData.firstName} />
-        <Text>Last Name</Text>
-        <TextInput style={styles.input} value={userData.lastName} />
-        <Text>Your Email</Text>
-        <TextInput style={styles.input} value={userData.email} />
-        <Text>Your Address</Text>
-        <TextInput style={styles.input} value={userData.address} />
+      {/* Form Section */}
+      <View style={styles.formCard}>
+        <Text style={styles.label}>User Name</Text>
+        <TextInput style={styles.input} value={userData.firstName} onChangeText={(text) => setUserData({ ...userData, firstName: text })} />
+
+        <Text style={styles.label}>Address</Text>
+        <TextInput style={styles.input} value={userData.address} onChangeText={(text) => setUserData({ ...userData, address: text })} />
       </View>
     </View>
+  </>
   );
 }
 
 const styles = StyleSheet.create({
+  headerStyle:{
+    width : '100%', 
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
+    
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#DF6316',
-    padding: 15,
-    paddingTop: 40,
   },
-  headerText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  profileSection: {
+  profileCard: {
     alignItems: 'center',
-    backgroundColor: '#DF6316',
-    paddingVertical: 65,
-    marginBottom: 20,
+    backgroundColor: '#fff',
+    margin: 20,
+    padding: 20,
+    borderRadius: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
+    bottom : 20
   },
   profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     backgroundColor: '#ddd',
     marginBottom: 10,
   },
   profileName: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#333',
   },
   profileLocation: {
     fontSize: 16,
-    color: '#fff',
-    marginBottom: 5,
+    color: '#777',
+    marginTop: 5,
   },
-  form: {
-    margin: 20,
+  formCard: {
+    backgroundColor: '#fff',
+    marginHorizontal: 20,
+    padding: 20,
+    borderRadius: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
+    bottom : 20
+
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
     marginBottom: 15,
-    backgroundColor: '#fff',
+    fontSize: 16,
+    backgroundColor: '#f8f8f8',
   },
   loadingContainer: {
     flex: 1,
@@ -157,3 +184,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+

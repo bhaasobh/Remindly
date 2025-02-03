@@ -4,6 +4,7 @@ import { ShoppingList } from '@/components/ShoppingList';
 import { PersonalList } from '@/components/PersonalList';
 import { ItemInputModal } from '@/components/ItemInputModal';
 import { useLogin } from '../auth/LoginContext';
+import Header from '../../components/Header';
 import config from '../../config';
 
 interface ShoppingItem {
@@ -33,10 +34,6 @@ export default function TabTwoScreen() {
             method: 'GET',
           });
           const shoppingData = await shoppingResponse.json();
-      
-          // console.log('Shopping List API Response:', shoppingData);
-
-      
           if (shoppingResponse.ok) {
             if (Array.isArray(shoppingData)) {
               setShoppingList(shoppingData);
@@ -61,11 +58,7 @@ export default function TabTwoScreen() {
             `${config.SERVER_API}/users/${userId}/personal-items`,
             { method: 'GET' }
           );
-    
-          const personalData = await personalResponse.json();
-    
-          // console.log('Personal List Response:', personalData);
-    
+          const personalData = await personalResponse.json();    
           if (personalResponse.ok) {
             setPersonalList(personalData.personalItems || []);
           } else {
@@ -126,11 +119,6 @@ export default function TabTwoScreen() {
         console.error('Error parsing response JSON');
         return { error: 'Invalid JSON response from server' };
       });
-      
-      console.log('Response Status:', response.status);
-      console.log('Response Data:', data);
-      
-      // Adjust to check for `data.newItem`
       if (response.ok && data.newItem) {
         setShoppingList((prev) => [
           ...prev,
@@ -149,13 +137,12 @@ export default function TabTwoScreen() {
     _id: string;
     itemName: string;
   }) => {
-    fetch(`${config.SERVER_API}/personal-list/${updatedPersonalItem._id}`, {
+    fetch(`${config.SERVER_API}/personal-items/${updatedPersonalItem._id}`, {
   method: 'PUT',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(updatedPersonalItem),
 })
   .then((res) => {
-    console.log('Response Status:', res.status);
     return res.json().then((data) => ({ ok: res.ok, data }));
   })
   .then(({ ok, data }) => {
@@ -241,54 +228,107 @@ export default function TabTwoScreen() {
     }
   };
 
+  const handleClearShoppingList = async () => {
+    try {
+      // מחיקת כל הפריטים אחד-אחד
+      await Promise.all(
+        shoppingList.map(async (item) => {
+          await fetch(`${config.SERVER_API}/shopping-list/${userId}/${item._id}`, {
+            method: 'DELETE',
+          });
+        })
+      );
+      setShoppingList([]); // עדכון ה-state לאחר מחיקה
+    } catch (error) {
+      console.error('Error clearing shopping list:', error);
+      Alert.alert('Error', 'Failed to clear shopping list.');
+    }
+  };
+  
+  const handleClearPersonalList = async () => {
+    try {
+      // מחיקת כל הפריטים אחד-אחד
+      await Promise.all(
+        personalList.map(async (item) => {
+          await fetch(`${config.SERVER_API}/personal-items/${item._id}`, {
+            method: 'DELETE',
+          });
+        })
+      );
+      setPersonalList([]); // עדכון ה-state לאחר מחיקה
+    } catch (error) {
+      console.error('Error clearing personal list:', error);
+      Alert.alert('Error', 'Failed to clear personal list.');
+    }
+  };
+  
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{isShoppingList ? 'Shopping List' : 'Personal List'}</Text>
-      <View style={styles.buttons}>
-        <TouchableOpacity
-          style={[styles.switchButton, isShoppingList && styles.activeButton]}
-          onPress={() => setIsShoppingList(true)}
-        >
-          <Text style={[styles.switchButtonText, isShoppingList && styles.activeButtonText]}>Shopping List</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.switchButton, !isShoppingList && styles.activeButton]}
-          onPress={() => setIsShoppingList(false)}
-        >
-          <Text style={[styles.switchButtonText, !isShoppingList && styles.activeButtonText]}>Personal List</Text>
-        </TouchableOpacity>
+    <>
+      <View style={styles.headerStyle}> 
+        <Header />
       </View>
-      {isShoppingList ? (
-         <ShoppingList
-         items={shoppingList}
-         onAddItem={() => setModalVisible(true)}
-         onRemoveAll={() => setShoppingList([])}
-         onRemoveItem={handleRemoveShoppingItem}
-         onUpdateItem={handleUpdateItem}
-       />
-      ) : (
-        <PersonalList
-          items={personalList}
-          onAddItem={() => setModalVisible(true)}
-          onRemoveAll={() => setPersonalList([])}
-          onRemoveItem={handleRemovePersonalItem}
-          onUpdateItem={handleUpdatePersonalItem}
+  
+      <View style={styles.container}>
+        <Text style={styles.title}>{isShoppingList ? 'Shopping List' : 'Personal List'}</Text>
+        <View style={styles.buttons}>
+          <TouchableOpacity
+            style={[styles.switchButton, isShoppingList && styles.activeButton]}
+            onPress={() => setIsShoppingList(true)}
+          >
+            <Text style={[styles.switchButtonText, isShoppingList && styles.activeButtonText]}>
+              Shopping List
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.switchButton, !isShoppingList && styles.activeButton]}
+            onPress={() => setIsShoppingList(false)}
+          >
+            <Text style={[styles.switchButtonText, !isShoppingList && styles.activeButtonText]}>
+              Personal List
+            </Text>
+          </TouchableOpacity>
+        </View>
+  
+        {isShoppingList ? (
+          <ShoppingList
+            items={shoppingList}
+            onAddItem={() => setModalVisible(true)}
+            onRemoveAll={handleClearShoppingList}
+            onRemoveItem={handleRemoveShoppingItem}
+            onUpdateItem={handleUpdateItem}
+          />
+        ) : (
+          <PersonalList
+            items={personalList}
+            onAddItem={() => setModalVisible(true)}
+            onRemoveAll={handleClearPersonalList}
+            onRemoveItem={handleRemovePersonalItem}
+            onUpdateItem={handleUpdatePersonalItem}
+          />
+        )}
+  
+        <ItemInputModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          onAddItem={(name, quantity, averageDays) =>
+            isShoppingList ? handleAddShoppingItem(name, quantity, averageDays) : handleAddPersonalItem(name)
+          }
+          isShoppingList={isShoppingList}
         />
-      )}
-      <ItemInputModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onAddItem={(name, quantity, averageDays) =>
-          isShoppingList ? handleAddShoppingItem(name, quantity, averageDays) : handleAddPersonalItem(name)
-        }
-        isShoppingList={isShoppingList}
-      />
-    </View>
+      </View>
+    </>
   );
+  
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, paddingTop: 80 },
+  headerStyle:{
+    width : '100%', 
+    paddingBottom: 20,
+    backgroundColor:'white'
+  },
+  container: { flex: 1, padding: 20, backgroundColor: '#ffffff'},
   title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center', color: '#DF6316' },
   buttons: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 20 },
   switchButton: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 5, borderWidth: 1, borderColor: '#DF6316' },
