@@ -41,7 +41,7 @@ const MapComponent = () => {
 
   const triggeredReminders = useRef(new Set<string>());
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
-  const {userId, reminders, fetchReminders, refreshKey } = useLogin(); // Access refreshKey from context
+  const {userId, reminders, fetchReminders, refreshKey } = useLogin();
   const [mapKey, setMapKey] = useState(0);
 
   const [refresh, setrefresh] = useState(false); 
@@ -55,10 +55,11 @@ const MapComponent = () => {
 
 
 
+  const [wasAtHome, setWasAtHome] = useState(false); 
 
    const [userAddress, setUserAddress] = useState<{ HouseLatitude: number; HouseLongitude: number } | null>(null);
-   const [leftHouse, setLeftHouse] = useState(false); // New state for tracking if the user left their house
-   const [showItemList, setShowItemList] = useState(false); // Control visibility of ShowItemList
+   const [leftHouse, setLeftHouse] = useState(false); 
+   const [showItemList, setShowItemList] = useState(false); 
 
 
 
@@ -83,73 +84,72 @@ const MapComponent = () => {
     fetchUserAddress();
   }, [userId]);
 
-  useEffect(() => {
-    let subscription: Location.LocationSubscription | null = null;
-    
-  
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === "granted") {
-        subscription = await Location.watchPositionAsync(
-          {
-            accuracy: Location.Accuracy.High,
+useEffect(() => {
+  let subscription: Location.LocationSubscription | null = null;
 
-            timeInterval: 5000, // Update location every 5 seconds
+  (async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status === "granted") {
+      subscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 5000, 
+          distanceInterval: 10, 
+        },
+        (location) => {
+          setUserLocation(location);
 
-            distanceInterval: 10, // Update when moving 10 meters
-          },
-          (location) => {
-            
-            setUserLocation(location);
-            if (lastMapUpdateLocation) {
-              const distanceMoved = getDistance(
-                { latitude: location.coords.latitude, longitude: location.coords.longitude },
-                { latitude: lastMapUpdateLocation.coords.latitude, longitude: lastMapUpdateLocation.coords.longitude }
-              );
-            
-              if (distanceMoved >= 100) { // Update map only when user moves 100m
-                setMapRegion({
-                  latitude: location.coords.latitude,
-                  longitude: location.coords.longitude,
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01,
-                });
-                setLastMapUpdateLocation(location); // Save last updated location
-              }
-            } else {
-              setLastMapUpdateLocation(location); // Initialize last map update location
+          if (lastMapUpdateLocation) {
+            const distanceMoved = getDistance(
+              { latitude: location.coords.latitude, longitude: location.coords.longitude },
+              { latitude: lastMapUpdateLocation.coords.latitude, longitude: lastMapUpdateLocation.coords.longitude }
+            );
+
+            if (distanceMoved >= 100) { 
+              setMapRegion({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              });
+              setLastMapUpdateLocation(location); 
+            }
+          } else {
+            setLastMapUpdateLocation(location);
+          }
+
+          if (userAddress) {
+            const distanceToHome = getDistance(
+              { latitude: location.coords.latitude, longitude: location.coords.longitude },
+              { latitude: userAddress.HouseLatitude, longitude: userAddress.HouseLongitude }
+            );
+
+            if (distanceToHome <= 50 && !wasAtHome) {
+              setWasAtHome(true);
             }
 
-
-            if (userAddress) {
-              const distanceToHome = getDistance(
-                { latitude: location.coords.latitude, longitude: location.coords.longitude },
-                { latitude: userAddress.HouseLatitude, longitude: userAddress.HouseLongitude }
-              );
-
-              // Check if user has left the house
-              if (distanceToHome > 50 && !leftHouse) {
-                setLeftHouse(true);
-                setShowItemList(true); // Show item list modal
-              } else if (distanceToHome <= 50 && leftHouse) {
-                setLeftHouse(false);
-                setShowItemList(false); // Hide item list modal
-              }
+            if (wasAtHome && distanceToHome > 50 && !leftHouse) {
+              setLeftHouse(true);
+              setShowItemList(true); 
+            } 
+            else if (distanceToHome <= 50 && leftHouse) {
+              setLeftHouse(false);
+              setShowItemList(false);
             }
           }
-        );
-      } else {
-        Alert.alert("Permission Denied", "Location permission is required to use this feature.");
-      }
-    })();
-  
-    return () => {
-      if (subscription) {
-        subscription.remove();
-      }
-    };
+        }
+      );
+    } else {
+      Alert.alert("Permission Denied", "Location permission is required to use this feature.");
+    }
+  })();
 
-  }, [userLocation, userAddress, leftHouse]);
+  return () => {
+    if (subscription) {
+      subscription.remove();
+    }
+  };
+}, [userLocation, userAddress, leftHouse, wasAtHome]); 
 
   
   const handleMarketPress = (lat: number, lng: number) => {
