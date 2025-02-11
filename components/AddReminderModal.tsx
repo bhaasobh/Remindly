@@ -60,7 +60,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({
         return;
       }
     } else if (reminderType === 'time') {
-      if (!Time.trim()) {
+      if (!selectedTime) { // ✅ Fix: Check selectedTime instead of Time.trim()
         Alert.alert('Error', 'Please select a time.');
         return;
       }
@@ -69,11 +69,13 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({
         return;
       }
     }
-  const timeArray = Time.split(':');
+  
     const updatedDate = new Date(selectedDate);
+
     if (selectedTime) {
       updatedDate.setHours(selectedTime.getHours(), selectedTime.getMinutes(), 0, 0);
     }
+  
     const newReminder = {
       id: Date.now().toString(),
       title,
@@ -147,7 +149,6 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({
         onSaveReminder(savedReminder);
         setModalVisible(false); 
         Alert.alert('Success', 'Reminder added successfully!');      } else {
-        console.error('Failed to save reminder:', result.message || response.statusText);
       }
     } catch (error) {
       console.error('Error saving reminder:', error);
@@ -226,17 +227,18 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({
 
               {showDatePicker && (
                 <DateTimePicker
-                  value={date}
-                  mode={isTimePicker ? 'time' : 'date'}
+                value={selectedTime} // Use selectedTime
+                mode={isTimePicker ? 'time' : 'date'}
                   display={Platform.OS === 'android' ? 'default' : 'spinner'}
                   onChange={(event, selectedDate) => {
                     setShowDatePicker(false);
                     if (selectedDate) {
                       if (isTimePicker) {
-                       
                         setSelectedTime(selectedDate);
+                        setTime(selectedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })); // ✅ Update Time string
                       } else {
-                        setDate(selectedDate);
+                        setSelectedDate(selectedDate);
+                        
                       }
                     }
                   }}
