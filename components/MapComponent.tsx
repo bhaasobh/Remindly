@@ -48,11 +48,14 @@ const MapComponent = () => {
 
   const [nearbyMarkets, setNearbyMarkets] = useState<Market[]>([])
   const [showMarkets, setShowMarkets] = useState(false);
+
   const [locationReminders, setLocationReminders] = useState<Reminder[]>([]);
   const [selectedMarket, setSelectedMarket] = useState<{ lat: number; lng: number } | null>(null);
   const [lastMapUpdateLocation, setLastMapUpdateLocation] = useState<Location.LocationObject | null>(null);
 
 
+
+  const [wasAtHome, setWasAtHome] = useState(false); 
 
    const [userAddress, setUserAddress] = useState<{ HouseLatitude: number; HouseLongitude: number } | null>(null);
    const [leftHouse, setLeftHouse] = useState(false); // New state for tracking if the user left their house
@@ -84,7 +87,6 @@ const MapComponent = () => {
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
     
-  
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === "granted") {
@@ -97,7 +99,6 @@ const MapComponent = () => {
             distanceInterval: 10, // Update when moving 10 meters
           },
           (location) => {
-            
             setUserLocation(location);
             if (lastMapUpdateLocation) {
               const distanceMoved = getDistance(
@@ -124,17 +125,21 @@ const MapComponent = () => {
                 { latitude: userAddress.HouseLatitude, longitude: userAddress.HouseLongitude }
               );
 
-              // Check if user has left the house
-              if (distanceToHome > 50 && !leftHouse) {
-                setLeftHouse(true);
-                setShowItemList(true); // Show item list modal
-              } else if (distanceToHome <= 50 && leftHouse) {
-                setLeftHouse(false);
-                setShowItemList(false); // Hide item list modal
-              }
+          if (distanceToHome <= 50 && !wasAtHome) {
+              setWasAtHome(true);
+            }
+
+            if (wasAtHome && distanceToHome > 50 && !leftHouse) {
+              setLeftHouse(true);
+              setShowItemList(true); 
+            } 
+            else if (distanceToHome <= 50 && leftHouse) {
+              setLeftHouse(false);
+              setShowItemList(false);
             }
           }
-        );
+        }
+      );
       } else {
         Alert.alert("Permission Denied", "Location permission is required to use this feature.");
       }
